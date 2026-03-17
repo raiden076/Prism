@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "prism-engine",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-03-20",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "vars": {
+    "AI_ACTIVATED": "false" // Default to Phase 1 (AI Bypass)
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "prism_board",
+      "database_id": "00000000-0000-0000-0000-000000000000" // Define in production
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "VAULT",
+      "bucket_name": "prism-vault"
+    }
+  ]
+}
