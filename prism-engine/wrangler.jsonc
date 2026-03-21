@@ -6,14 +6,19 @@
   "compatibility_flags": ["nodejs_compat"],
 
   "vars": {
-    "AI_ACTIVATED": "false" // Default to Phase 1 (AI Bypass)
+    "AI_ACTIVATED": "false",
+    "OTPLESS_CLIENT_ID": "YOUR_OTPLESS_CLIENT_ID",
+    "OTPLESS_CLIENT_SECRET": "YOUR_OTPLESS_CLIENT_SECRET",
+    "SUPERTOKENS_CORE_URL": "https://st-dev-16616f40-2494-11f1-9d50-9fb4c1926b7c.aws.supertokens.io",
+    "SUPERTOKENS_API_KEY": "50pz2DUX8VpgOry4G4ok9-y3Cx",
+    "USE_SUPERTOKENS_AUTH": "false" // Feature flag for gradual rollout
   },
 
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "prism_board",
-      "database_id": "00000000-0000-0000-0000-000000000000" // Define in production
+      "database_id": "caab8a58-e0b0-44f8-ac17-68b4c7d6f94e"
     }
   ],
 
@@ -22,5 +27,7 @@
       "binding": "VAULT",
       "bucket_name": "prism-vault"
     }
-  ]
+  ],
+
+  "migrations": []
 }
