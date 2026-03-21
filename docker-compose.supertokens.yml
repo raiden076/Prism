@@ -1,0 +1,48 @@
+version: '3.8'
+
+# NOTE: This Docker Compose configuration is for FUTURE self-hosting only.
+# Currently using SuperTokens Managed Service - NOT deploying these containers.
+# To use this locally, set environment variables:
+#   - SUPERTOKENS_CORE_URL=http://localhost:3567
+#   - SUPERTOKENS_API_KEY=supertokens_api_key_change_me_in_production
+
+services:
+  supertokens-db:
+    image: postgres:15-alpine
+    container_name: supertokens-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: supertokens
+      POSTGRES_PASSWORD: supertokens_password
+      POSTGRES_DB: supertokens
+    ports:
+      - "5433:5432"
+    volumes:
+      - supertokens-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supertokens"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  supertokens-core:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:9.4
+    container_name: supertokens-core
+    restart: unless-stopped
+    depends_on:
+      supertokens-db:
+        condition: service_healthy
+    environment:
+      POSTGRESQL_CONNECTION_URI: postgresql://supertokens:supertokens_password@supertokens-db:5432/supertokens
+      API_KEYS: supertokens_api_key_change_me_in_production
+    ports:
+      - "3567:3567"
+    healthcheck:
+      test: >
+        bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  supertokens-postgres-data:
