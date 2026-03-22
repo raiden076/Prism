@@ -5,7 +5,7 @@
   "identifier": "com.prism.civic",
   "build": {
     "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://192.168.7.102:1420",
     "beforeBuildCommand": "bun run build",
     "frontendDist": "../build"
   },
@@ -37,13 +37,7 @@
   },
   "plugins": {
     "opener": {
-      "default": true
-    },
-    "geolocation": {
-      "default": true
-    },
-    "haptics": {
-      "default": true
+      "requireLiteralLeadingDot": false
     }
   }
 }
