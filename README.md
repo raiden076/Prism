@@ -380,7 +380,26 @@ Known Issues:
 
 ## 📜 License
 
-[Add your license here]
+**⚠️ IMPORTANT LICENSING NOTICE**
+
+This project is licensed under a combined **Apache License 2.0 + Commons Clause**.
+
+### What This Means:
+
+- ✅ **You CAN**: Use, modify, and distribute the software for **non-commercial** purposes
+- ✅ **You CAN**: Fork the repository and make changes
+- ✅ **You CAN**: Use it for personal, educational, or research projects
+- ❌ **You CANNOT**: Sell the software or offer it as a commercial service/hosting
+
+### Commons Clause Restriction:
+
+The grant of rights under the Apache License 2.0 **does not include** the right to "Sell" the software. "Sell" means practicing any rights granted to provide to third parties, for a fee or other consideration, a product or service whose value derives substantially from the functionality of this software.
+
+### Classification:
+
+This is **Source-Available** software, not Open Source software under the OSI definition.
+
+See [LICENSE](./LICENSE) for the full license text.
 
 ## 🔗 Resources
 

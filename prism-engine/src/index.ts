@@ -1,3 +1,13 @@
+/**
+ * PRISM - Decentralized Civic Infrastructure Platform
+ * 
+ * Licensed under Apache License 2.0 + Commons Clause
+ * See LICENSE file for full terms
+ * 
+ * Commercial use, sale, or hosting of this software is prohibited
+ * without explicit permission from the licensor.
+ */
+
 import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { ContractorLocationObject } from './contractor-locations';
