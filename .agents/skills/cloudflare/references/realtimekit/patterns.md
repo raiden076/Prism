@@ -64,7 +64,8 @@ function VideoGrid({ meeting }) {
     update();
     return () => { meeting.participants.joined.off('participantJoined', update); meeting.participants.joined.off('participantLeft', update); };
   }, [meeting]);
-  return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+  const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' };
+  return <div style={gridStyle}>
     {participants.map(p => <VideoTile key={p.id} participant={p} />)}
   </div>;
 }

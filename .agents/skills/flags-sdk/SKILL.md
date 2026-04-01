@@ -309,10 +309,12 @@ async function ConfidentialFlags({ values }) {
 import { FlagValues, FlagDefinitions } from 'flags/react';
 
 // Renders script tag with flag values for Flags Explorer
-<FlagValues values={{ myFlag: true }} />
+const flagVals = { myFlag: true };
+<FlagValues values={flagVals} />
 
 // Renders script tag with flag definitions for Flags Explorer
-<FlagDefinitions definitions={{ myFlag: { options: [...], description: '...' } }} />
+const flagDefs = { myFlag: { options: [...], description: '...' } };
+<FlagDefinitions definitions={flagDefs} />
 ```
 
 ## References

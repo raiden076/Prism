@@ -71,6 +71,16 @@ Thumbs.db
 *.seed
 *.pid.lock
 
+# AI Agent IDE configs
+.claude/
+.forge/
+.opencode/
+.qwen/
+.serena/
+
+# IDE-specific config files
+opencode.jsonc
+
 # Cloudflare
 .wrangler/
 .dev.vars
