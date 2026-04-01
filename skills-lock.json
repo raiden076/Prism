@@ -6,6 +6,11 @@
       "sourceType": "github",
       "computedHash": "5c2804e8f0d4944c7ce6939a2e4afdcf0cb69c966a505481ed8b96e20bb32eee"
     },
+    "authgear-integration": {
+      "source": "authgear/authgear-skills",
+      "sourceType": "github",
+      "computedHash": "e6b54d34f017983fa3d640a1f4a2037c54a7c75c86c52123a2a9c3757e70d47c"
+    },
     "before-and-after": {
       "source": "vercel-labs/before-and-after",
       "sourceType": "github",

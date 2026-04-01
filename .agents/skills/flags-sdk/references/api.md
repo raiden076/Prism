@@ -100,7 +100,8 @@ Renders a `<script data-flag-values>` tag for the Flags Explorer.
 
 ```tsx
 import { FlagValues } from 'flags/react';
-<FlagValues values={{ myFlag: true }} />
+const flagValues = { myFlag: true };
+<FlagValues values={flagValues} />
 ```
 
 For confidential flags, encrypt first:
@@ -126,13 +127,14 @@ Renders a `<script data-flag-definitions>` tag with flag metadata.
 ```tsx
 import { FlagDefinitions } from 'flags/react';
 
-<FlagDefinitions definitions={{
+const definitions = {
   myFlag: {
     options: [{ value: false }, { value: true }],
     origin: 'https://example.com/flag/myFlag',
     description: 'Example flag',
   },
-}} />
+};
+<FlagDefinitions definitions={definitions} />
 ```
 
 ---
