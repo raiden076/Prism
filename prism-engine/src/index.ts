@@ -823,7 +823,7 @@ app.get('/api/v1/bounties/nearby', async (c: Context<{ Bindings: Env }>) => {
     }).map((report: any) => ({
       ...report,
       distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000, // in km
-      bounty_amount: 5 + Math.floor(Math.random() * 5) // ₹5-10
+      bounty_amount: Math.round(5 + (report.severity_weight || 0.5) * 10) // ₹5-15, deterministic from severity_weight
     }));
 
     // Create bounty entries for any that don't exist
@@ -884,9 +884,9 @@ app.post('/api/v1/bounties/claim', async (c: Context<{ Bindings: Env }>) => {
 
     await c.env.DB.prepare(
       `UPDATE VerificationBounties
-       SET bounty_status = 'claimed', claimed_by = ?, claimed_at = ?
+       SET bounty_status = 'claimed', claimed_by = ?, claimed_at = ?, claimed_expires_at = ?
        WHERE id = ?`
-    ).bind(verifier.id, Date.now(), bounty_id).run();
+    ).bind(verifier.id, Date.now(), claimExpiresAt, bounty_id).run();
 
     return c.json({
       status: 'Bounty claimed',
@@ -919,16 +919,19 @@ app.post('/api/v1/verifications', async (c: Context<{ Bindings: Env }>) => {
       return c.json({ error: 'Verifier not found' }, 404);
     }
 
-    // Get bounty and report
+    // Get bounty and report — enforce 15-minute claim window
     const bounty = await c.env.DB.prepare(
       `SELECT vb.*, r.latitude, r.longitude
        FROM VerificationBounties vb
        JOIN Reports r ON vb.report_id = r.id
-       WHERE vb.id = ? AND vb.claimed_by = ?`
-    ).bind(bounty_id, verifier.id).first();
+       WHERE vb.id = ?
+         AND vb.claimed_by = ?
+         AND vb.bounty_status = 'claimed'
+         AND vb.claimed_expires_at > ?`
+    ).bind(bounty_id, verifier.id, Date.now()).first();
 
     if (!bounty) {
-      return c.json({ error: 'Bounty not found or not claimed by you' }, 404);
+      return c.json({ error: 'Bounty claim expired or not found', reason: 'expired' }, 410);
     }
 
     // Calculate spatial drift
