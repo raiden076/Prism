@@ -820,11 +820,17 @@ app.get('/api/v1/bounties/nearby', async (c: Context<{ Bindings: Env }>) => {
     const nearby = reports.results?.filter((report: any) => {
       const distance = haversine(userLat, userLon, report.latitude, report.longitude);
       return distance <= radiusMeters;
-    }).map((report: any) => ({
-      ...report,
-      distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000, // in km
-      bounty_amount: 5 + Math.floor(Math.random() * 5) // ₹5-10
-    }));
+    }).map((report: any) => {
+      // Deterministic bounty amount based on severity_weight
+      const severity = report.severity_weight || 0.5;
+      const bounty_amount = Math.round(5 + (severity * 10)); // Base ₹5 + up to ₹10 based on severity
+      
+      return {
+        ...report,
+        distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000, // in km
+        bounty_amount
+      };
+    });
 
     // Create bounty entries for any that don't exist
     for (const report of nearby) {
