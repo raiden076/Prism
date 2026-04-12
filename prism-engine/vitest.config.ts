@@ -1,24 +1,21 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  ssr: {
+    noExternal: ['@cloudflare/vitest-pool-workers'],
+  },
   test: {
-    globals: true,
-    environment: 'miniflare',
-    environmentOptions: {
-      bindings: {
-        AI_ACTIVATED: 'false',
-        OTPLESS_CLIENT_ID: 'test-client-id',
-        OTPLESS_CLIENT_SECRET: 'test-client-secret',
-        SUPERTOKENS_CORE_URL: 'https://try.supertokens.io',
-        SUPERTOKENS_API_KEY: 'test-api-key',
-        USE_SUPERTOKENS_AUTH: 'true',
-      },
-    },
+    setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.ts'],
     coverage: {
-      provider: 'v8',
+      provider: 'istanbul',
       reporter: ['text', 'html'],
       exclude: ['node_modules/', 'tests/'],
+    },
+    poolOptions: {
+      workers: {
+        isolatedStorage: true,
+      },
     },
   },
 });
