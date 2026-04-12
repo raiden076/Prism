@@ -1,9 +1,6 @@
-import { defineConfig } from 'vitest/config';
+import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
 
-export default defineConfig({
-  ssr: {
-    noExternal: ['@cloudflare/vitest-pool-workers'],
-  },
+export default defineWorkersConfig({
   test: {
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.ts'],
@@ -15,6 +12,8 @@ export default defineConfig({
     poolOptions: {
       workers: {
         isolatedStorage: true,
+        main: './tests/worker.ts',
+        wrangler: { configPath: './wrangler.jsonc' },
       },
     },
   },
