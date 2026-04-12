@@ -32,12 +32,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Haversine distance calculation returns accurate results for test coordinate pairs
   4. Query layer wraps all D1 prepared statements with typed params and results
   5. Vitest runs with @cloudflare/vitest-pool-workers and test fixtures for D1 + R2 work
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — Types + geo libraries (types.ts, digipin.ts, spatial.ts)
+- [ ] 01-02-PLAN.md — Typed D1 query layer (queries.ts)
+- [ ] 01-03-PLAN.md — Test infrastructure + all unit tests
 
 ### Phase 2: Auth + RBAC
 **Goal**: Users authenticate via phone OTP, sessions persist, roles enforce access on all protected routes
