@@ -35,9 +35,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Types + geo libraries (types.ts, digipin.ts, spatial.ts)
-- [ ] 01-02-PLAN.md — Typed D1 query layer (queries.ts)
-- [ ] 01-03-PLAN.md — Test infrastructure + all unit tests
+- [x] 01-01-PLAN.md — Types + geo libraries (types.ts, digipin.ts, spatial.ts)
+- [x] 01-02-PLAN.md — Typed D1 query layer (queries.ts)
+- [x] 01-03-PLAN.md — Test infrastructure + all unit tests
 
 ### Phase 2: Auth + RBAC
 **Goal**: Users authenticate via phone OTP, sessions persist, roles enforce access on all protected routes
