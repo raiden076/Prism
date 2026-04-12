@@ -135,65 +135,65 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| WHIT-01 | Phase 1 | Pending |
-| WHIT-02 | Phase 1 | Pending |
-| WHIT-03 | Phase 1 | Pending |
-| WHIT-04 | Phase 1 | Pending |
-| RBAC-01 | Phase 1 | Pending |
-| RBAC-02 | Phase 1 | Pending |
-| RBAC-03 | Phase 1 | Pending |
-| RBAC-04 | Phase 1 | Pending |
-| RBAC-05 | Phase 1 | Pending |
-| RPT-01 | Phase 2 | Pending |
-| RPT-02 | Phase 2 | Pending |
-| RPT-03 | Phase 2 | Pending |
-| RPT-04 | Phase 2 | Pending |
-| RPT-05 | Phase 2 | Pending |
-| RPT-06 | Phase 2 | Pending |
-| RPT-07 | Phase 2 | Pending |
-| RPT-08 | Phase 2 | Pending |
-| RPT-09 | Phase 2 | Pending |
-| RPT-10 | Phase 2 | Pending |
-| RPT-11 | Phase 2 | Pending |
-| RPT-12 | Phase 2 | Pending |
-| ACCT-01 | Phase 3 | Pending |
-| ACCT-02 | Phase 3 | Pending |
-| ACCT-03 | Phase 3 | Pending |
-| ACCT-04 | Phase 3 | Pending |
-| VERF-01 | Phase 3 | Pending |
-| VERF-02 | Phase 3 | Pending |
-| VERF-03 | Phase 3 | Pending |
-| VERF-04 | Phase 3 | Pending |
-| BNTY-01 | Phase 4 | Pending |
-| BNTY-02 | Phase 4 | Pending |
-| BNTY-03 | Phase 4 | Pending |
-| BNTY-04 | Phase 4 | Pending |
-| BNTY-05 | Phase 4 | Pending |
-| BNTY-06 | Phase 4 | Pending |
-| UI-01 | Phase 5 | Pending |
-| UI-02 | Phase 5 | Pending |
-| UI-03 | Phase 5 | Pending |
-| UI-04 | Phase 5 | Pending |
-| UI-05 | Phase 5 | Pending |
-| UI-06 | Phase 5 | Pending |
-| UI-07 | Phase 5 | Pending |
-| UI-08 | Phase 6 | Pending |
-| UI-09 | Phase 6 | Pending |
-| UI-10 | Phase 6 | Pending |
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
-| TEST-03 | Phase 2 | Pending |
-| TEST-04 | Phase 2 | Pending |
+| TEST-01 | Phase 1: Foundation | Pending |
+| TEST-02 | Phase 1: Foundation | Pending |
+| AUTH-01 | Phase 2: Auth + RBAC | Pending |
+| AUTH-02 | Phase 2: Auth + RBAC | Pending |
+| AUTH-03 | Phase 2: Auth + RBAC | Pending |
+| AUTH-04 | Phase 2: Auth + RBAC | Pending |
+| RBAC-01 | Phase 2: Auth + RBAC | Pending |
+| RBAC-02 | Phase 2: Auth + RBAC | Pending |
+| RBAC-03 | Phase 2: Auth + RBAC | Pending |
+| RBAC-04 | Phase 2: Auth + RBAC | Pending |
+| RBAC-05 | Phase 2: Auth + RBAC | Pending |
+| WHIT-01 | Phase 3: Core Reports | Pending |
+| WHIT-02 | Phase 3: Core Reports | Pending |
+| WHIT-03 | Phase 3: Core Reports | Pending |
+| WHIT-04 | Phase 3: Core Reports | Pending |
+| RPT-01 | Phase 3: Core Reports | Pending |
+| RPT-02 | Phase 3: Core Reports | Pending |
+| RPT-03 | Phase 3: Core Reports | Pending |
+| RPT-04 | Phase 3: Core Reports | Pending |
+| RPT-05 | Phase 3: Core Reports | Pending |
+| RPT-06 | Phase 3: Core Reports | Pending |
+| RPT-07 | Phase 3: Core Reports | Pending |
+| RPT-08 | Phase 3: Core Reports | Pending |
+| RPT-09 | Phase 3: Core Reports | Pending |
+| RPT-10 | Phase 3: Core Reports | Pending |
+| RPT-11 | Phase 3: Core Reports | Pending |
+| RPT-12 | Phase 3: Core Reports | Pending |
+| ACCT-01 | Phase 4: Accountability + Bounty | Pending |
+| ACCT-02 | Phase 4: Accountability + Bounty | Pending |
+| ACCT-03 | Phase 4: Accountability + Bounty | Pending |
+| ACCT-04 | Phase 4: Accountability + Bounty | Pending |
+| VERF-01 | Phase 4: Accountability + Bounty | Pending |
+| VERF-02 | Phase 4: Accountability + Bounty | Pending |
+| VERF-03 | Phase 4: Accountability + Bounty | Pending |
+| VERF-04 | Phase 4: Accountability + Bounty | Pending |
+| BNTY-01 | Phase 4: Accountability + Bounty | Pending |
+| BNTY-02 | Phase 4: Accountability + Bounty | Pending |
+| BNTY-03 | Phase 4: Accountability + Bounty | Pending |
+| BNTY-04 | Phase 4: Accountability + Bounty | Pending |
+| BNTY-05 | Phase 4: Accountability + Bounty | Pending |
+| BNTY-06 | Phase 4: Accountability + Bounty | Pending |
+| TEST-03 | Phase 5: Test Coverage | Pending |
+| TEST-04 | Phase 5: Test Coverage | Pending |
+| UI-01 | Phase 6: Frontend Core | Pending |
+| UI-02 | Phase 6: Frontend Core | Pending |
+| UI-03 | Phase 6: Frontend Core | Pending |
+| UI-04 | Phase 6: Frontend Core | Pending |
+| UI-05 | Phase 6: Frontend Core | Pending |
+| UI-06 | Phase 6: Frontend Core | Pending |
+| UI-07 | Phase 6: Frontend Core | Pending |
+| UI-08 | Phase 7: Frontend Bounty | Pending |
+| UI-09 | Phase 7: Frontend Bounty | Pending |
+| UI-10 | Phase 7: Frontend Bounty | Pending |
 
 **Coverage:**
 - v1 requirements: 44 total
 - Mapped to phases: 44
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-12*
-*Last updated: 2026-04-12 after initial definition*
+*Last updated: 2026-04-12 after roadmap creation*
