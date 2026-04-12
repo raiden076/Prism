@@ -19,54 +19,7 @@ import {
 	Session,
 	Passwordless
 } from './lib/supertokens';
-
-// DIGIPIN Grid (India's Digital Pin Code system)
-const DIGIPIN_GRID = [
-  ['F', 'C', '9', '8'],
-  ['J', '3', '2', '7'],
-  ['K', '4', '1', '6'],
-  ['L', '5', 'T', 'H'],
-];
-
-const INDIA_BOUNDS = {
-  minLat: 2.5,
-  maxLat: 38.0,
-  minLon: 63.5,
-  maxLon: 99.0,
-};
-
-// Convert latitude and longitude to DIGIPIN
-function latLngToDIGIPIN(lat: number, lon: number): string {
-  let digipin = '';
-  let minLat = INDIA_BOUNDS.minLat;
-  let maxLat = INDIA_BOUNDS.maxLat;
-  let minLon = INDIA_BOUNDS.minLon;
-  let maxLon = INDIA_BOUNDS.maxLon;
-
-  for (let level = 0; level < 5; level++) {
-    const latStep = (maxLat - minLat) / 4;
-    const lonStep = (maxLon - minLon) / 4;
-
-    let row = Math.floor((lat - minLat) / latStep);
-    row = Math.max(0, Math.min(3, row));
-    let col = Math.floor((lon - minLon) / lonStep);
-    col = Math.max(0, Math.min(3, col));
-
-    const gridRow = 3 - row;
-    digipin += DIGIPIN_GRID[gridRow][col];
-
-    if (level === 2 || level === 3) {
-      digipin += '-';
-    }
-
-    maxLat = minLat + latStep * (4 - row);
-    minLat = minLat + latStep * (3 - row);
-    maxLon = minLon + lonStep * (col + 1);
-    minLon = minLon + lonStep * col;
-  }
-
-  return digipin;
-}
+import { latLngToDIGIPIN } from './lib/digipin';
 
 export type Env = {
   DB: D1Database;
