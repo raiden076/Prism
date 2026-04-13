@@ -107,7 +107,24 @@ export async function upsertUserBySuperTokens(
   }
 
   // Create new user with crony role (D-09: auto-create)
-  return createUser(db, { role: 'crony', phoneNumber });
+  // Handle race: concurrent OTP verifications for same phone may both reach here.
+  // Catch UNIQUE constraint violation on phone_number and re-fetch the winner.
+  try {
+    return await createUser(db, { role: 'crony', phoneNumber });
+  } catch (error: any) {
+    const msg = error?.message ?? '';
+    if (msg.includes('UNIQUE constraint') || msg.includes('unique') || msg.includes('duplicate')) {
+      // Race condition: another request created the user first. Re-fetch and link.
+      const winner = await getUserByPhone(db, phoneNumber);
+      if (winner) {
+        if (!winner.supertokensUserId) {
+          await linkSuperTokensUserId(db, winner.id, stUserId);
+        }
+        return winner;
+      }
+    }
+    throw error;
+  }
 }
 
 export async function createUser(
