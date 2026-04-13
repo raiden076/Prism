@@ -13,6 +13,7 @@ import { cors } from 'hono/cors';
 import { ContractorLocationObject } from './contractor-locations';
 import { latLngToDIGIPIN } from './lib/digipin';
 import { authRoutes } from './routes/auth';
+import { whitelistRoutes } from './routes/whitelist';
 
 export type Env = {
   DB: D1Database;
@@ -32,6 +33,9 @@ app.use('*', cors());
 
 // Auth routes (SuperTokens adapter-based)
 app.route('/auth', authRoutes);
+
+// Phase 3: Whitelist webhook route
+app.route('/api/v1/whitelist', whitelistRoutes);
 
 // RBAC Middleware exports (Phase 3+ route handlers use these)
 export { withUser } from './middleware/auth';

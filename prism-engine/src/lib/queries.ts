@@ -135,13 +135,14 @@ export async function createUser(
     regionScope?: string | null;
     supervisorId?: string | null;
     reporterId?: string | null;
+    hierarchyDepth?: number;
   }
 ): Promise<User> {
   const id = crypto.randomUUID();
   await db
     .prepare(
-      `INSERT INTO Users (id, role, phone_number, region_scope, supervisor_id, reporter_id)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO Users (id, role, phone_number, region_scope, supervisor_id, reporter_id, hierarchy_depth)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       id,
@@ -149,7 +150,8 @@ export async function createUser(
       input.phoneNumber,
       input.regionScope ?? null,
       input.supervisorId ?? null,
-      input.reporterId ?? null
+      input.reporterId ?? null,
+      input.hierarchyDepth ?? 0
     )
     .run();
   const user = await getUserById(db, id);
