@@ -63,14 +63,14 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Whitelist webhook creates user with hierarchy link and depth tracking
   2. Authenticated whitelisted user submits report with photo stored in R2, geo-tagged with DIGIPIN
-  3. Phase 1 reports auto-approve; invalid payloads return 400 with clear error
+  3. Phase 1 reports enter as 'pending' status (whitelist-trusted, skip AI review, normal flow entry)
   4. Board endpoint returns paginated reports filtered by status and scoped by user role
-  5. Status state machine rejects invalid transitions and enforces the correct flow
+  5. Status state machine rejects invalid transitions and enforces pending->assigned->fixed_pending_verification->resolved flow
 **Plans**: 3 plans
 
 Plans:
 - [ ] 03-01-PLAN.md — Whitelist webhook route (hierarchy + depth tracking + user creation)
-- [ ] 03-02-PLAN.md — Report harvest route (R2 upload + DIGIPIN + auto-approve + validation)
+- [ ] 03-02-PLAN.md — Report harvest route (R2 upload + DIGIPIN + pending status + validation)
 - [ ] 03-03-PLAN.md — Board query + nearby + status transition routes (RBAC filtering + state machine)
 
 ### Phase 4: Accountability + Bounty
