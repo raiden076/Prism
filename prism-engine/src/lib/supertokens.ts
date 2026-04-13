@@ -54,7 +54,10 @@ export function initSuperTokens(coreUrl: string, apiKey: string) {
               ...originalImplementation,
               sendSms: async (input) => {
                 // SuperTokens managed service handles SMS/WhatsApp delivery
-                console.log(`OTP for ${input.phoneNumber}: ${input.userInputCode}`);
+                // Only log OTP in development -- never in production
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`OTP for ${input.phoneNumber}: ${input.userInputCode}`);
+                }
                 return originalImplementation.sendSms(input);
               },
             };
