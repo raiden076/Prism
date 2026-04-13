@@ -558,6 +558,17 @@ export async function getWhitelistedSourceByReference(
   return row ? rowToWhitelistedSource(row) : null;
 }
 
+export async function getWhitelistedSourceByUserId(
+  db: D1Database,
+  userId: string
+): Promise<WhitelistedSource | null> {
+  const row = await db
+    .prepare('SELECT * FROM Whitelisted_Sources WHERE linked_user_id = ? AND approval_status = ?')
+    .bind(userId, 'approved')
+    .first<WhitelistedSourceRow>();
+  return row ? rowToWhitelistedSource(row) : null;
+}
+
 export async function createWhitelistedSource(
   db: D1Database,
   input: {
