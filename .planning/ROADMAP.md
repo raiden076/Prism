@@ -49,12 +49,12 @@ Plans:
   3. New user auto-created with crony role on first successful OTP verification
   4. Admin sees all reports, contractor sees assigned only, crony sees own + available bounties
   5. Hierarchy-scoped access works -- subtree users see reports from their branch
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md — SuperTokens spike + auth adapter + query extensions (Wave 1)
+- [ ] 02-02-PLAN.md — Auth routes (OTP, profile, signout) + auto-create + legacy cleanup (Wave 2)
+- [ ] 02-03-PLAN.md — RBAC middleware (withUser, requireRole, getReportsFilter) + hierarchy tests (Wave 3)
 
 ### Phase 3: Core Reports
 **Goal**: Trusted users can submit geo-tagged reports with photos, and the board can query them with role-based filtering
