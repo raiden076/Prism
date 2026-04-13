@@ -25,6 +25,7 @@ export type Env = {
   SUPERTOKENS_CORE_URL: string;
   SUPERTOKENS_API_KEY: string;
   USE_SUPERTOKENS_AUTH: string;
+  WEBHOOK_SECRET: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();
