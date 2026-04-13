@@ -40,6 +40,7 @@ app.route('/auth', authRoutes);
 app.route('/api/v1/whitelist', whitelistRoutes);
 
 // Phase 3: Report routes (harvest, board query)
+
 app.route('/api/v1/reports', reportRoutes);
 
 // RBAC Middleware exports (Phase 3+ route handlers use these)

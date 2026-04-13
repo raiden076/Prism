@@ -111,8 +111,8 @@ export async function upsertUserBySuperTokens(
   // Catch UNIQUE constraint violation on phone_number and re-fetch the winner.
   try {
     const user = await createUser(db, { role: 'crony', phoneNumber });
+    // Link SuperTokens ID to newly created user
     await linkSuperTokensUserId(db, user.id, stUserId);
-    // Re-fetch to get updated supertokens_user_id
     const linked = await getUserById(db, user.id);
     return linked ?? user;
   } catch (error: any) {
