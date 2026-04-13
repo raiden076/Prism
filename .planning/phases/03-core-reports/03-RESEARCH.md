@@ -460,22 +460,13 @@ if (media.size > MAX_FILE_SIZE) {
 | A3 | `WEBHOOK_SECRET` will be added to `wrangler.jsonc` vars section | Pitfall 2 | Without it, webhook route fails in deployed env |
 | A4 | Offset pagination sufficient for board endpoint (cursor pagination not needed) | Architecture Patterns | If dataset grows large, offset pagination degrades — but capped at 100 reports |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **RPT-04 vs Schema: 'approved' vs 'pending' status**
-   - What we know: RPT-04 says "auto-approved (status = 'approved')". D1 CHECK constraint doesn't include 'approved'. CONTEXT.md says "Phase 1 reports enter as 'pending' status". STATUS_TRANSITIONS starts from 'pending'.
-   - What's unclear: Is RPT-04 stale text, or should 'approved' be added to the schema?
-   - Recommendation: Treat 'pending' as correct per CONTEXT.md. The "auto-approved" language likely means "auto-trusted, skip AI review" — not a literal status. Whitelist-trusted reports enter as 'pending' and can immediately transition to 'assigned'. **This needs user confirmation before execution.**
+1. **RPT-04 vs Schema: 'approved' vs 'pending' status** — RESOLVED: Use 'pending' per CONTEXT.md. Plans implement pending status. "Auto-approved" means "auto-trusted, skip AI review", not a literal status.
 
-2. **Should old inline routes be removed from index.ts during extraction?**
-   - What we know: index.ts has duplicate logic that will move to route modules.
-   - What's unclear: Remove immediately or deprecate?
-   - Recommendation: Remove inline routes and wire route modules. Old code is preserved in git history.
+2. **Should old inline routes be removed from index.ts during extraction?** — RESOLVED: Wire new route modules in index.ts. Old inline routes superseded by route module pattern. Old code preserved in git history.
 
-3. **Hierarchy depth update strategy for createUser()**
-   - What we know: `createUser()` doesn't set `hierarchy_depth`. Migration 0003 added the column with DEFAULT 0.
-   - What's unclear: Should createUser() handle it or should callers do a separate UPDATE?
-   - Recommendation: Add `hierarchyDepth` to `createUser()` input type. Less error-prone than requiring callers to remember the UPDATE.
+3. **Hierarchy depth update strategy for createUser()** — RESOLVED: Add `hierarchyDepth` param to `createUser()` input type. Plan 01 Task 1 implements this.
 
 ## Environment Availability
 
