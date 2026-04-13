@@ -99,7 +99,11 @@ export async function upsertUserBySuperTokens(
       await linkSuperTokensUserId(db, byPhone.id, stUserId);
     }
     // Re-fetch to get updated supertokens_user_id
-    return (await getUserById(db, byPhone.id))!;
+    const refetched = await getUserById(db, byPhone.id);
+    if (!refetched) {
+      throw new Error('User disappeared after ST ID link -- concurrent modification');
+    }
+    return refetched;
   }
 
   // Create new user with crony role (D-09: auto-create)
