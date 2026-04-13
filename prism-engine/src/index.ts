@@ -33,6 +33,20 @@ app.use('*', cors());
 // Auth routes (SuperTokens adapter-based)
 app.route('/auth', authRoutes);
 
+// RBAC Middleware exports (Phase 3+ route handlers use these)
+export { withUser } from './middleware/auth';
+export { requireRole, getReportsFilter } from './middleware/rbac';
+
+/*
+ * RBAC Middleware Usage (Phase 3+):
+ * app.get('/api/v1/reports', withUser(), requireRole('admin'), async (c) => { ... })
+ * app.get('/api/v2/reports', withUser(), async (c) => {
+ *   const user = c.get('user');
+ *   const filter = await getReportsFilter(user.role, user.id, c.env.DB);
+ *   // Use filter.whereClause and filter.params in WHERE clause
+ * })
+ */
+
 // Basic health check
 app.get('/health', (c: Context<{ Bindings: Env }>) => c.json({ status: 'online', phase: c.env.AI_ACTIVATED === 'true' ? 2 : 1 }));
 
