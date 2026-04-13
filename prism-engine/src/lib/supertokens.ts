@@ -98,18 +98,6 @@ export async function getUserIdFromSession(
   return payload?.userId ?? null;
 }
 
-// Get full session payload using adapter
-export async function getSession(
-  request: Request,
-  coreUrl: string,
-  apiKey: string
-) {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) return null;
-  const accessToken = authHeader.slice(7);
-  return adapterVerifyAccessToken(accessToken, coreUrl, apiKey);
-}
-
 // Revoke session using adapter (extracts sessionHandle from JWT, then calls Core)
 export async function revokeSession(
   request: Request,
@@ -122,67 +110,6 @@ export async function revokeSession(
   const payload = await adapterVerifyAccessToken(accessToken, coreUrl, apiKey);
   if (!payload) return false;
   return adapterRevokeSession(payload.sessionHandle, coreUrl, apiKey);
-}
-
-/**
- * @deprecated Use withUser() middleware from Plan 03 instead.
- * This middleware wraps SDK-based session extraction which has runtime issues.
- * Kept for backward compatibility during migration.
- */
-export function createSuperTokensMiddleware() {
-  return async (c: any, next: any) => {
-    try {
-      const authHeader = c.req.raw?.headers?.get('Authorization');
-      if (authHeader?.startsWith('Bearer ')) {
-        const accessToken = authHeader.slice(7);
-        const payload = await adapterVerifyAccessToken(
-          accessToken,
-          c.env.SUPERTOKENS_CORE_URL,
-          c.env.SUPERTOKENS_API_KEY
-        );
-        if (payload) {
-          c.set('supertokensUserId', payload.userId);
-        }
-      }
-      await next();
-    } catch (error) {
-      console.error('SuperTokens middleware error:', error);
-      await next();
-    }
-  };
-}
-
-/**
- * @deprecated Use withUser() middleware from Plan 03 instead.
- * This middleware wraps SDK-based session extraction which has runtime issues.
- * Kept for backward compatibility during migration.
- */
-export function requireAuth() {
-  return async (c: any, next: any) => {
-    try {
-      const authHeader = c.req.raw?.headers?.get('Authorization');
-      if (!authHeader?.startsWith('Bearer ')) {
-        return c.json({ error: 'Unauthorized', message: 'Authentication required' }, 401);
-      }
-
-      const accessToken = authHeader.slice(7);
-      const payload = await adapterVerifyAccessToken(
-        accessToken,
-        c.env.SUPERTOKENS_CORE_URL,
-        c.env.SUPERTOKENS_API_KEY
-      );
-
-      if (!payload) {
-        return c.json({ error: 'Unauthorized', message: 'Invalid or expired token' }, 401);
-      }
-
-      c.set('supertokensUserId', payload.userId);
-      await next();
-    } catch (error) {
-      console.error('Authentication required:', error);
-      return c.json({ error: 'Unauthorized', message: 'Authentication required' }, 401);
-    }
-  };
 }
 
 export { SuperTokens, Session, Passwordless };
