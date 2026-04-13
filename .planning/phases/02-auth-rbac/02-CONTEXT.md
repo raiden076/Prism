@@ -14,8 +14,8 @@ Users authenticate via phone OTP through SuperTokens, sessions persist across re
 ## Implementation Decisions
 
 ### SuperTokens Workers Compatibility
-- **D-01:** Spike first — validate `supertokens-node` on Workers runtime before building auth routes. Run `bun run dev`, test init + OTP flow. If it fails, debug what breaks. ~15 min spike as first plan task.
-- **D-02:** OTP delivery via SuperTokens managed SMS (single channel). No WhatsApp for now. Existing `supertokens.ts` SMS override stays as-is.
+- **D-01:** Research compatibility first — study `supertokens-node` Workers compatibility via docs/web before writing code. Understand runtime constraints (V8 isolates, `nodejs_compat` flag limits, missing Node APIs) before building. Research output informs spike/validation plan.
+- **D-02:** SMS now, WhatsApp later. Start with SuperTokens managed SMS delivery. Add WhatsApp channel as future enhancement — keep existing `supertokens.ts` SMS override, structure code to accept additional channels cleanly.
 - **D-03:** Header-based token transfer (`Authorization` header). Existing code already uses `tokenTransferMethod: 'header'`. Workers don't handle cookies natively — header-based avoids cookie complexity.
 - **D-04:** Session config: 15min access token + 7day refresh token (keep existing). Good balance for field reporting app.
 
@@ -24,6 +24,16 @@ Users authenticate via phone OTP through SuperTokens, sessions persist across re
 - **D-06:** Recursive CTE hierarchy query in `queries.ts` as `getDescendantIds(db, userId)`. Called by RBAC middleware when hierarchy-scoped access needed. Clean, testable, reusable.
 - **D-07:** Drop legacy phone-in-header auth entirely. SuperTokens only from Phase 2 onward. Prototype is being rewritten — clean break, less code, less confusion.
 - **D-08:** Per-request DB lookup for user resolution. Middleware resolves SuperTokens session userId → D1 Users row on every request, cached on Hono context. Simple, always fresh role data.
+
+### Session-to-DB User Mapping
+- **D-09:** Auto-create D1 user on first successful OTP verification. SuperTokens `onUserSignUp` fires → API layer creates D1 `Users` row with `crony` role default + links `supertokens_user_id`. Existing `createUser()` in queries.ts handles insertion.
+- **D-10:** Link via `supertokens_user_id` column (migration 0004 already adds it). `getUserBySuperTokensId()` in queries.ts already queries this mapping.
+- **D-11:** If user exists in D1 but has no `supertokens_user_id` — link on first SuperTokens login. Upsert pattern: check by phone first, if found update `supertokens_user_id`; if not found, create new user.
+
+### Auth Route Structure
+- **D-12:** Extract `/auth/*` routes to separate module (e.g., `prism-engine/src/routes/auth.ts`). Keep `index.ts` as route aggregator importing route modules. Cleaner than inline in monolith.
+- **D-13:** Clean cutover from legacy auth — no dual auth. Delete old `/api/v2/auth/verify` (OTPLEss) and `/api/v2/user/info` (phone header). Replace with SuperTokens-backed `/auth/signinup`, `/auth/me`, `/auth/signout`.
+- **D-14:** Auth routes follow `/auth/` prefix convention (matching existing pattern in supertokens.ts middleware). Phase 3+ API routes under `/api/v1/` and `/api/v2/` use auth middleware.
 
 ### Claude's Discretion
 - Exact middleware file organization (single file vs split by concern)

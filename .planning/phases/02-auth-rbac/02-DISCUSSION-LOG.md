@@ -5,7 +5,7 @@
 
 **Date:** 2026-04-13
 **Phase:** 02-auth-rbac
-**Areas discussed:** SuperTokens Workers compat, RBAC middleware architecture
+**Areas discussed:** SuperTokens Workers compat, RBAC middleware architecture, Session-to-DB user mapping, Auth route structure
 
 ---
 
@@ -13,22 +13,23 @@
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Spike first, then build | Validate supertokens-node on Workers via `bun run dev`, debug what breaks | ✓ |
-| Research compatibility first | Web/docs research before writing code | |
+| Spike first, then build | Validate supertokens-node on Workers via `bun run dev`, debug what breaks | |
+| Research compatibility first | Web/docs research before writing code | ✓ |
 | Trust existing scaffolding | Prototype showed it works, build on top | |
 
-**User's choice:** Spike first, then build
-**Notes:** STATE.md flagged SuperTokens + Workers as a risk with no official integration. Spike validates before investing in auth route implementation.
+**User's choice:** Research compatibility first
+**Notes:** Study `supertokens-node` Workers constraints (V8 isolates, `nodejs_compat` limits, missing Node APIs) via docs/web before coding. Research output informs spike plan.
 
 ### OTP Delivery Channel
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| SuperTokens managed SMS | Single channel, existing code already configured | ✓ |
+| SuperTokens managed SMS | Single channel, existing code already configured | |
 | WhatsApp + SMS both | Requires Meta Business setup | |
-| SMS now, WhatsApp later | Progressive approach | |
+| SMS now, WhatsApp later | Progressive approach | ✓ |
 
-**User's choice:** SuperTokens managed SMS
+**User's choice:** SMS now, WhatsApp later
+**Notes:** Start with managed SMS. Structure code to accept additional channels for future WhatsApp integration.
 
 ### Token Transfer Method
 
@@ -63,7 +64,6 @@
 | Route metadata + guard | Decorate routes, single middleware reads metadata | |
 
 **User's choice:** Hono middleware chains
-**Notes:** Composable pattern fits Hono's middleware architecture well.
 
 ### Hierarchy Subtree Query Location
 
@@ -74,7 +74,6 @@
 | In-memory cache + CTE | Cache per Worker instance, complex invalidation | |
 
 **User's choice:** Query layer function
-**Notes:** Clean, testable, reusable — consistent with Phase 1 D-06/D-07 pattern.
 
 ### Legacy Auth Handling
 
@@ -84,7 +83,6 @@
 | Keep dual auth | Both paths during transition | |
 
 **User's choice:** SuperTokens only
-**Notes:** Prototype being rewritten — no need for backwards compatibility.
 
 ### User Resolution Strategy
 
@@ -94,7 +92,57 @@
 | Session metadata cache | Cache in SuperTokens session, fewer DB queries | |
 
 **User's choice:** Per-request DB lookup
-**Notes:** Always fresh role data, simple implementation.
+
+---
+
+## Session-to-DB User Mapping
+
+### Auto-create on First OTP
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Auto-create with crony default | SuperTokens onUserSignUp → API creates D1 row, links supertokens_user_id | ✓ |
+| Manual admin creation | Admin must create user before first login | |
+| Whitelist-triggered only | Only create via whitelist webhook (Phase 3) | |
+
+**User's choice:** Auto-create with crony default
+**Notes:** Existing `createUser()` in queries.ts handles insertion. Default role = crony.
+
+### Existing User Without ST Mapping
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Link on first login (upsert) | Check by phone, update supertokens_user_id if found, create if not | ✓ |
+| Reject with error | User must be re-created | |
+| Duplicate user | Create new D1 row (orphan) | |
+
+**User's choice:** Link on first login (upsert pattern)
+**Notes:** `getUserBySuperTokensId()` already exists in queries.ts for lookup.
+
+---
+
+## Auth Route Structure
+
+### Route File Organization
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Separate module | Extract /auth/* to routes/auth.ts, index.ts as aggregator | ✓ |
+| Keep inline | All routes in index.ts monolith | |
+| Split by version | /api/v1/ in one file, /api/v2/ in another | |
+
+**User's choice:** Separate module
+**Notes:** Break monolith pattern. index.ts imports route modules. Cleaner for growing codebase.
+
+### Legacy Route Cutover
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Clean cutover | Delete old OTPless routes, replace with SuperTokens routes | ✓ |
+| Gradual migration | Keep old routes alongside new during transition | |
+
+**User's choice:** Clean cutover
+**Notes:** Delete `/api/v2/auth/verify` (OTPLEss), `/api/v2/user/info` (phone header). New routes: `/auth/signinup`, `/auth/me`, `/auth/signout`.
 
 ---
 
