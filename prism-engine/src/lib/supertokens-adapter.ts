@@ -35,19 +35,19 @@ interface ConsumeOTPResponse {
 
 // --- JWKS Cache ---
 
+// jose's createRemoteJWKSet handles its own caching internally.
+// We cache only the JWKSet instance per URL to avoid re-creating on every request,
+// but rely on jose's built-in stale-while-revalidate for key rotation.
 let cachedJwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 let cachedJwksUrl: string | null = null;
-let jwksCacheExpiry = 0;
-const JWKS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 function getJwks(coreUrl: string) {
   const jwksUrl = `${coreUrl}/.well-known/jwks.json`;
-  if (cachedJwks && cachedJwksUrl === jwksUrl && Date.now() < jwksCacheExpiry) {
+  if (cachedJwks && cachedJwksUrl === jwksUrl) {
     return cachedJwks;
   }
   cachedJwks = createRemoteJWKSet(new URL(jwksUrl));
   cachedJwksUrl = jwksUrl;
-  jwksCacheExpiry = Date.now() + JWKS_CACHE_TTL_MS;
   return cachedJwks;
 }
 
