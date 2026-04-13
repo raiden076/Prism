@@ -71,6 +71,41 @@ export async function getUserBySuperTokensId(
   return row ? rowToUser(row) : null;
 }
 
+export async function linkSuperTokensUserId(
+  db: D1Database,
+  userId: string,
+  stUserId: string
+): Promise<boolean> {
+  const result = await db
+    .prepare('UPDATE Users SET supertokens_user_id = ? WHERE id = ?')
+    .bind(stUserId, userId)
+    .run();
+  return result.meta.changes > 0;
+}
+
+export async function upsertUserBySuperTokens(
+  db: D1Database,
+  stUserId: string,
+  phoneNumber: string
+): Promise<User> {
+  // Try to find existing user by SuperTokens ID
+  const bySt = await getUserBySuperTokensId(db, stUserId);
+  if (bySt) return bySt;
+
+  // Try to find existing user by phone (D-11: link if found)
+  const byPhone = await getUserByPhone(db, phoneNumber);
+  if (byPhone) {
+    if (!byPhone.supertokensUserId) {
+      await linkSuperTokensUserId(db, byPhone.id, stUserId);
+    }
+    // Re-fetch to get updated supertokens_user_id
+    return (await getUserById(db, byPhone.id))!;
+  }
+
+  // Create new user with crony role (D-09: auto-create)
+  return createUser(db, { role: 'crony', phoneNumber });
+}
+
 export async function createUser(
   db: D1Database,
   input: {
