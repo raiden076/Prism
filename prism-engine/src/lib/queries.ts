@@ -110,7 +110,11 @@ export async function upsertUserBySuperTokens(
   // Handle race: concurrent OTP verifications for same phone may both reach here.
   // Catch UNIQUE constraint violation on phone_number and re-fetch the winner.
   try {
-    return await createUser(db, { role: 'crony', phoneNumber });
+    const user = await createUser(db, { role: 'crony', phoneNumber });
+    // Link SuperTokens ID to newly created user
+    await linkSuperTokensUserId(db, user.id, stUserId);
+    const linked = await getUserById(db, user.id);
+    return linked ?? user;
   } catch (error: any) {
     const msg = error?.message ?? '';
     if (msg.includes('UNIQUE constraint') || msg.includes('unique') || msg.includes('duplicate')) {
