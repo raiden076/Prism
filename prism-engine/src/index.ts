@@ -20,6 +20,7 @@ import {
 	Passwordless
 } from './lib/supertokens';
 import { latLngToDIGIPIN } from './lib/digipin';
+import { authRoutes } from './routes/auth';
 
 export type Env = {
   DB: D1Database;
@@ -36,6 +37,9 @@ export type Env = {
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', cors());
+
+// Auth routes (SuperTokens adapter-based)
+app.route('/auth', authRoutes);
 
 // Initialize SuperTokens if enabled
 app.use('*', async (c, next) => {
