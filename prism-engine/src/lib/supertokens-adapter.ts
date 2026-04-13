@@ -187,13 +187,14 @@ export async function consumeOTPCode(
     const data = await response.json() as any;
 
     if (data.status === 'OK') {
+      // Extract session info from the Core API response.
+      // The consumeCode endpoint returns session tokens in the response body
+      // when using header-based token transfer, or via Set-Cookie headers.
       return {
         userId: data.user.id,
-        sessionHandle: data.createdNewUser
-          ? data.user.loginMethods?.[0]?.recipeUserId ?? data.user.id
-          : data.user.id,
-        accessToken: '', // Tokens are set as cookies by Core; for header transfer, extract from response
-        refreshToken: '',
+        sessionHandle: data.session?.handle ?? '',
+        accessToken: data.session?.accessToken ?? '',
+        refreshToken: data.session?.refreshToken ?? '',
         createdNewUser: data.createdNewUser ?? false,
       };
     }
