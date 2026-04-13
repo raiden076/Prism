@@ -355,15 +355,16 @@ export class AuthAnalytics {
 }
 
 /**
- * Global analytics instance
+ * Per-request analytics factory for Cloudflare Workers.
+ *
+ * Workers isolates are shared across requests, so a module-level singleton
+ * would accumulate metrics indefinitely and mix data from unrelated sessions.
+ * Using a per-request instance limits memory and avoids cross-request contamination.
+ * If cross-request analytics are needed, emit to an external service
+ * (Analytics Engine, Workers KV) instead.
  */
-let globalAnalytics: AuthAnalytics | null = null;
-
-export function getAuthAnalytics(): AuthAnalytics {
-  if (!globalAnalytics) {
-    globalAnalytics = new AuthAnalytics();
-  }
-  return globalAnalytics;
+export function getAuthAnalytics(maxMetrics: number = 1000): AuthAnalytics {
+  return new AuthAnalytics(maxMetrics);
 }
 
 export default AuthAnalytics;
