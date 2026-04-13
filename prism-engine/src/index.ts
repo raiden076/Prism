@@ -11,6 +11,7 @@
 import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { ContractorLocationObject } from './contractor-locations';
+import { whitelistRoutes } from './routes/whitelist';
 import {
 	initSuperTokens,
 	createSuperTokensMiddleware,
@@ -355,57 +356,8 @@ app.get('/api/v1/workers/status', async (c: Context<{ Bindings: Env }>) => {
 
 // --- Phase 1 Routes ---
 
-// Whitelist Webhook - Phase 1 hierarchy capture
-app.post('/api/v1/whitelist', async (c: Context<{ Bindings: Env }>) => {
-  const body = await c.req.json();
-  const { name, reference_id, phone_number, referrer_phone } = body;
-
-  if (!name || !reference_id || !phone_number) {
-    return c.json({ error: 'Missing required payload parameters' }, 400);
-  }
-
-  // Phase 1: Require referrer phone for hierarchy tracking
-  if (!referrer_phone) {
-    return c.json({ error: 'Referrer phone number required for hierarchy tracking' }, 400);
-  }
-
-  try {
-    // Look up referrer to establish hierarchy
-    let reporterId = null;
-    let hierarchyDepth = 0;
-
-    const referrerQuery = await c.env.DB.prepare(
-      'SELECT id, hierarchy_depth FROM Users WHERE phone_number = ?'
-    ).bind(referrer_phone).first();
-
-    if (referrerQuery) {
-      reporterId = referrerQuery.id;
-      hierarchyDepth = (referrerQuery.hierarchy_depth as number || 0) + 1;
-    }
-
-    const userId = crypto.randomUUID();
-
-    // Create user record with hierarchy
-    await c.env.DB.prepare(
-      'INSERT INTO Users (id, role, phone_number, reporter_id, hierarchy_depth) VALUES (?, ?, ?, ?, ?)'
-    ).bind(userId, 'crony', phone_number, reporterId, hierarchyDepth).run();
-
-    // Map the whitelist approval payload
-    const sourceId = crypto.randomUUID();
-    await c.env.DB.prepare(
-      'INSERT INTO Whitelisted_Sources (id, linked_user_id, verified_name, reference_id, approval_status) VALUES (?, ?, ?, ?, ?)'
-    ).bind(sourceId, userId, name, reference_id, 'approved').run();
-
-    return c.json({
-      status: 'Whitelisted successfully',
-      id: sourceId,
-      hierarchy_depth: hierarchyDepth,
-      reporter_id: reporterId
-    }, 201);
-  } catch (error) {
-    return c.json({ error: 'Database transaction failed' }, 500);
-  }
-});
+// Whitelist Webhook - modular route from routes/whitelist.ts
+app.route('/api/v1/whitelist', whitelistRoutes);
 
 // Trusted Ingestion
 app.post('/api/v1/reports/harvest', async (c: Context<{ Bindings: Env }>) => {
