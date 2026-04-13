@@ -66,6 +66,7 @@ Each task was committed atomically:
 
 1. **Task 1: RED phase - types, queries, test file** - `872e84a` (test)
 2. **Task 2: GREEN phase - route implementation + wiring** - `9c319d5` (feat)
+3. **Post-verification fix - WEBHOOK_SECRET in Env type** - `8f8c48d` (fix)
 
 _Note: TDD tasks have separate RED (test) and GREEN (implementation) commits_
 
@@ -102,10 +103,17 @@ _Note: TDD tasks have separate RED (test) and GREEN (implementation) commits_
 - **Verification:** Tests pass after fix
 - **Committed in:** 9c319d5 (Task 2 commit)
 
+**3. [Rule 1 - Bug] Added WEBHOOK_SECRET to Env type in both types.ts and index.ts**
+- **Found during:** Post-implementation verification
+- **Issue:** Route handler uses c.env.WEBHOOK_SECRET but the Env type in both src/lib/types.ts and src/index.ts was missing the field, causing TypeScript compilation errors
+- **Fix:** Added `WEBHOOK_SECRET: string` to both Env type definitions
+- **Files modified:** src/lib/types.ts, src/index.ts
+- **Commit:** 8f8c48d
+
 ---
 
-**Total deviations:** 2 auto-fixed (1 blocking, 1 bug)
-**Impact on plan:** Both fixes necessary for test execution. No scope creep.
+**Total deviations:** 3 auto-fixed (1 blocking, 2 bugs)
+**Impact on plan:** All fixes necessary for correctness. No scope creep.
 
 ## Issues Encountered
 - Pre-existing supertokens-session.test.ts has 2 mock-based test failures (unrelated to whitelist changes, out of scope)
