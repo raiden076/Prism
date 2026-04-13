@@ -14,6 +14,7 @@ import { ContractorLocationObject } from './contractor-locations';
 import { latLngToDIGIPIN } from './lib/digipin';
 import { authRoutes } from './routes/auth';
 import { whitelistRoutes } from './routes/whitelist';
+import { reportRoutes } from './routes/reports';
 
 export type Env = {
   DB: D1Database;
@@ -37,6 +38,9 @@ app.route('/auth', authRoutes);
 
 // Phase 3: Whitelist webhook route
 app.route('/api/v1/whitelist', whitelistRoutes);
+
+// Phase 3: Report routes (harvest, board query)
+app.route('/api/v1/reports', reportRoutes);
 
 // RBAC Middleware exports (Phase 3+ route handlers use these)
 export { withUser } from './middleware/auth';
