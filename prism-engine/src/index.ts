@@ -820,11 +820,17 @@ app.get('/api/v1/bounties/nearby', async (c: Context<{ Bindings: Env }>) => {
     const nearby = reports.results?.filter((report: any) => {
       const distance = haversine(userLat, userLon, report.latitude, report.longitude);
       return distance <= radiusMeters;
-    }).map((report: any) => ({
-      ...report,
-      distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000, // in km
-      bounty_amount: 5 + Math.floor(Math.random() * 5) // ₹5-10
-    }));
+    }).map((report: any) => {
+      // Derive bounty_amount deterministically from severity_weight (0-1 range)
+      // base ₹5 + up to ₹15 based on severity_weight
+      const severityWeight = typeof report.severity_weight === 'number' ? report.severity_weight : 0.5;
+      const bountyAmount = Math.round(5 + severityWeight * 15);
+      return {
+        ...report,
+        distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000, // in km
+        bounty_amount: bountyAmount
+      };
+    });
 
     // Create bounty entries for any that don't exist
     for (const report of nearby) {
@@ -835,7 +841,7 @@ app.get('/api/v1/bounties/nearby', async (c: Context<{ Bindings: Env }>) => {
       if (!existingBounty) {
         const bountyId = crypto.randomUUID();
         const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
+        // bounty_amount is already deterministically computed in the map above
         await c.env.DB.prepare(
           `INSERT INTO VerificationBounties (id, report_id, bounty_amount, bounty_status, expires_at)
            VALUES (?, ?, ?, ?, ?)`
@@ -884,9 +890,9 @@ app.post('/api/v1/bounties/claim', async (c: Context<{ Bindings: Env }>) => {
 
     await c.env.DB.prepare(
       `UPDATE VerificationBounties
-       SET bounty_status = 'claimed', claimed_by = ?, claimed_at = ?
+       SET bounty_status = 'claimed', claimed_by = ?, claimed_at = ?, claimed_expires_at = ?
        WHERE id = ?`
-    ).bind(verifier.id, Date.now(), bounty_id).run();
+    ).bind(verifier.id, Date.now(), claimExpiresAt, bounty_id).run();
 
     return c.json({
       status: 'Bounty claimed',
@@ -924,11 +930,14 @@ app.post('/api/v1/verifications', async (c: Context<{ Bindings: Env }>) => {
       `SELECT vb.*, r.latitude, r.longitude
        FROM VerificationBounties vb
        JOIN Reports r ON vb.report_id = r.id
-       WHERE vb.id = ? AND vb.claimed_by = ?`
-    ).bind(bounty_id, verifier.id).first();
+       WHERE vb.id = ?
+         AND vb.claimed_by = ?
+         AND vb.bounty_status = 'claimed'
+         AND vb.claimed_expires_at > ?`
+    ).bind(bounty_id, verifier.id, Date.now()).first();
 
     if (!bounty) {
-      return c.json({ error: 'Bounty not found or not claimed by you' }, 404);
+      return c.json({ error: 'Bounty claim expired or not found' }, 410);
     }
 
     // Calculate spatial drift
