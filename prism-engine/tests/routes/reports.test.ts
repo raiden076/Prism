@@ -10,7 +10,7 @@ import { env } from 'cloudflare:test';
 import { Hono } from 'hono';
 import type { Env } from '../../src/lib/types';
 import { applyMigrations } from '../setup';
-import { upsertUserBySuperTokens, createWhitelistedSource, linkSuperTokensUserId } from '../../src/lib/queries';
+import { upsertUserBySuperTokens, createWhitelistedSource, linkSuperTokensUserId, createReport } from '../../src/lib/queries';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
 
 // Import the route module (will not exist during RED phase)
@@ -309,5 +309,197 @@ describe('Report Harvest Route', () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toContain('File too large');
+  });
+
+  // ===========================================================================
+  // Nearby reports (RPT-07)
+  // ===========================================================================
+
+  describe('Nearby reports', () => {
+    it('RPT-07: GET /nearby with lat/lon/radius returns 200 with reports within radius and distanceMeters', async () => {
+      // Create a report near Delhi (28.6139, 77.2090)
+      const nearLat = 28.6139;
+      const nearLon = 77.2090;
+      await createReport(env.DB, {
+        reporterId: whitelistedUser.dbUserId,
+        latitude: nearLat,
+        longitude: nearLon,
+        r2ImageUrl: 'r2://test.jpg',
+        status: 'pending',
+      });
+
+      const req = new Request(
+        `http://localhost/api/v1/reports/nearby?latitude=${nearLat}&longitude=${nearLon}&radius=500`
+      );
+
+      const res = await testApp.fetch(req, testEnv);
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.reports).toBeDefined();
+      expect(body.count).toBeGreaterThan(0);
+      expect(body.reports[0].distanceMeters).toBeDefined();
+    });
+
+    it('RPT-07: GET /nearby with radius > 5000 returns 400 "Radius exceeds maximum"', async () => {
+      const req = new Request(
+        'http://localhost/api/v1/reports/nearby?latitude=28.6139&longitude=77.2090&radius=6000'
+      );
+
+      const res = await testApp.fetch(req, testEnv);
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain('Radius exceeds maximum');
+    });
+
+    it('RPT-07: GET /nearby defaults radius to 1000 when not provided', async () => {
+      // Create a report ~200m from query point
+      await createReport(env.DB, {
+        reporterId: whitelistedUser.dbUserId,
+        latitude: 28.6140,
+        longitude: 77.2091,
+        r2ImageUrl: 'r2://test.jpg',
+        status: 'pending',
+      });
+
+      const req = new Request(
+        'http://localhost/api/v1/reports/nearby?latitude=28.6139&longitude=77.2090'
+      );
+
+      const res = await testApp.fetch(req, testEnv);
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.reports.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ===========================================================================
+  // Status transitions (RPT-10, RPT-11, RPT-12)
+  // ===========================================================================
+
+  describe('Status transitions', () => {
+    it('RPT-10: POST /:id/status with valid transition (pending -> assigned) returns 200', async () => {
+      const report = await createReport(env.DB, {
+        reporterId: whitelistedUser.dbUserId,
+        latitude: 28.6139,
+        longitude: 77.2090,
+        r2ImageUrl: 'r2://test.jpg',
+        status: 'pending',
+      });
+
+      const req = new Request(`http://localhost/api/v1/reports/${report.id}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${whitelistedUser.accessToken}`,
+        },
+        body: JSON.stringify({ status: 'assigned' }),
+      });
+
+      const res = await testApp.fetch(req, testEnv);
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.report.status).toBe('assigned');
+    });
+
+    it('RPT-11: Full valid chain: pending -> assigned -> fixed_pending_verification -> resolved', async () => {
+      const report = await createReport(env.DB, {
+        reporterId: whitelistedUser.dbUserId,
+        latitude: 28.6139,
+        longitude: 77.2090,
+        r2ImageUrl: 'r2://test.jpg',
+        status: 'pending',
+      });
+
+      // pending -> assigned
+      let req = new Request(`http://localhost/api/v1/reports/${report.id}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${whitelistedUser.accessToken}`,
+        },
+        body: JSON.stringify({ status: 'assigned' }),
+      });
+      let res = await testApp.fetch(req, testEnv);
+      expect(res.status).toBe(200);
+      let body = await res.json();
+      expect(body.report.status).toBe('assigned');
+
+      // assigned -> fixed_pending_verification
+      req = new Request(`http://localhost/api/v1/reports/${report.id}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${whitelistedUser.accessToken}`,
+        },
+        body: JSON.stringify({ status: 'fixed_pending_verification' }),
+      });
+      res = await testApp.fetch(req, testEnv);
+      expect(res.status).toBe(200);
+      body = await res.json();
+      expect(body.report.status).toBe('fixed_pending_verification');
+
+      // fixed_pending_verification -> resolved
+      req = new Request(`http://localhost/api/v1/reports/${report.id}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${whitelistedUser.accessToken}`,
+        },
+        body: JSON.stringify({ status: 'resolved' }),
+      });
+      res = await testApp.fetch(req, testEnv);
+      expect(res.status).toBe(200);
+      body = await res.json();
+      expect(body.report.status).toBe('resolved');
+    });
+
+    it('RPT-12: POST /:id/status with invalid transition (pending -> resolved) returns 400 with validTransitions', async () => {
+      const report = await createReport(env.DB, {
+        reporterId: whitelistedUser.dbUserId,
+        latitude: 28.6139,
+        longitude: 77.2090,
+        r2ImageUrl: 'r2://test.jpg',
+        status: 'pending',
+      });
+
+      const req = new Request(`http://localhost/api/v1/reports/${report.id}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${whitelistedUser.accessToken}`,
+        },
+        body: JSON.stringify({ status: 'resolved' }),
+      });
+
+      const res = await testApp.fetch(req, testEnv);
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain('Invalid transition');
+      expect(body.validTransitions).toBeDefined();
+      expect(body.validTransitions).toEqual(['pending_review', 'assigned']);
+    });
+
+    it('RPT-12: POST /:id/status for non-existent report returns 404', async () => {
+      const fakeId = crypto.randomUUID();
+      const req = new Request(`http://localhost/api/v1/reports/${fakeId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${whitelistedUser.accessToken}`,
+        },
+        body: JSON.stringify({ status: 'assigned' }),
+      });
+
+      const res = await testApp.fetch(req, testEnv);
+
+      expect(res.status).toBe(404);
+      const body = await res.json();
+      expect(body.error).toContain('not found');
+    });
   });
 });

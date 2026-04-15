@@ -407,27 +407,23 @@ export function getReportsFilter(
 | A4 | `supertokens-node` can work in Workers with proper request wrapping IF the CJS import issue is resolved | Architecture | If libphonenumber-js CJS issue is fundamental (not fixable by bundler), SDK approach is dead. |
 | A5 | `supervisor_id` is the canonical hierarchy column for RBAC, not `reporter_id` | Pitfall 4 | If wrong, RBAC subtree queries return incorrect results. User must confirm. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **SuperTokens + Workers Runtime Compatibility**
+1. **SuperTokens + Workers Runtime Compatibility** — RESOLVED by Plan 01 Task 1 (spike)
    - What we know: `supertokens-node` v24.0.2 fails to load in miniflare due to `libphonenumber-js/max/index.cjs` CJS syntax. Two of three existing test files fail.
-   - What's unclear: Can the bundler (wrangler/vite) resolve the CJS issue at build time? Or is the issue fundamental to the V8 isolate runtime?
-   - Recommendation: Spike task first. Try `(A)` bundling supertokens-node with proper CJS externals config; `(B)` SuperTokens Core REST API + `jose` for JWT. Pick whichever passes `bun run vitest` first.
+   - Resolution: Plan 01 spikes both approaches (A) bundler fix + PreParsedRequest wrapper, (B) Core REST API + jose. Spike determines working approach before Plans 02/03 build on it.
 
-2. **Hierarchy Model: `supervisor_id` vs `reporter_id`**
+2. **Hierarchy Model: `supervisor_id` vs `reporter_id`** — RESOLVED: use `supervisor_id`
    - What we know: Two hierarchy traversal paths exist. `queries.ts` uses `supervisor_id` (proper org hierarchy FK from migration 0002). `index.ts` uses `reporter_id` (referral tracking).
-   - What's unclear: Which is the intended hierarchy for RBAC scope? D-06 says "recursive CTE in queries.ts" which uses `supervisor_id`. But existing RBAC logic (index.ts lines 117-133) uses `reporter_id`.
-   - Recommendation: Use `supervisor_id` for RBAC (it's the proper organizational hierarchy). `reporter_id` tracks referral chains (Phase 3 whitelist feature). Planner should confirm with user.
+   - Resolution: Plan 03 uses `supervisor_id` via `getUserDescendants` recursive CTE for RBAC. `reporter_id` is referral tracking (Phase 3 whitelist feature).
 
-3. **Auth Analytics Wiring**
+3. **Auth Analytics Wiring** — RESOLVED: wire in
    - What we know: `auth-analytics.ts` exists with full metrics collection. It's in Claude's discretion area.
-   - What's unclear: Should it be wired in Phase 2 or deferred?
-   - Recommendation: Wire it in -- it's already built, just needs importing into auth routes.
+   - Resolution: Plan 02 Task 1 wires auth analytics into auth routes.
 
-4. **Feature Flag Wiring**
+4. **Feature Flag Wiring** — RESOLVED: keep simple env var
    - What we know: `feature-flags.ts` uses `process.env.ROLLOUT_STAGE` which doesn't work in Workers without nodejs_compat. `USE_SUPERTOKENS_AUTH` env var already exists as a simple string flag.
-   - What's unclear: Whether to use `FeatureFlagManager` for SuperTokens rollout or keep simple env var.
-   - Recommendation: Keep simple env var `USE_SUPERTOKENS_AUTH`. Don't wire `FeatureFlagManager` -- it has `process.env` issues and adds complexity.
+   - Resolution: Keep simple env var `USE_SUPERTOKENS_AUTH`. FeatureFlagManager not wired (has `process.env` issues).
 
 ## Environment Availability
 
