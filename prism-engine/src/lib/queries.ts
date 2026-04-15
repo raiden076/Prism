@@ -222,6 +222,42 @@ export async function getReportsByReporter(
   return results.map(rowToReport);
 }
 
+export async function getBoardReports(
+  db: D1Database,
+  filter: { whereClause: string; params: string[] },
+  options: { status?: ReportStatus; limit?: number; offset?: number }
+): Promise<{ reports: Report[]; total: number }> {
+  const limit = Math.min(options.limit ?? 100, 100);
+  const offset = options.offset ?? 0;
+
+  const whereParts = [filter.whereClause];
+  const params = [...filter.params];
+
+  if (options.status) {
+    whereParts.push('status = ?');
+    params.push(options.status);
+  }
+
+  const where = whereParts.join(' AND ');
+
+  const countResult = await db
+    .prepare(`SELECT COUNT(*) as total FROM Reports WHERE ${where}`)
+    .bind(...params)
+    .first<{ total: number }>();
+
+  const { results } = await db
+    .prepare(
+      `SELECT * FROM Reports WHERE ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+    )
+    .bind(...params, limit, offset)
+    .all<ReportRow>();
+
+  return {
+    reports: results.map(rowToReport),
+    total: countResult?.total ?? 0,
+  };
+}
+
 export async function createReport(
   db: D1Database,
   input: {

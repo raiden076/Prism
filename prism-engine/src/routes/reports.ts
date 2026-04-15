@@ -17,7 +17,9 @@ import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import { withUser } from '../middleware/auth';
 import type { AuthVariables } from '../middleware/auth';
-import { createReport, getWhitelistedSourceByUserId } from '../lib/queries';
+import { REPORT_STATUSES, isValidTransition, STATUS_TRANSITIONS } from '../lib/types';
+import type { ReportStatus } from '../lib/types';
+import { createReport, getWhitelistedSourceByUserId, getNearbyReports, getReportById, updateReportStatus } from '../lib/queries';
 
 export const reportRoutes = new Hono<{
   Bindings: Env;
@@ -105,4 +107,78 @@ reportRoutes.post('/harvest', withUser(), async (c) => {
   });
 
   return c.json({ report }, 201);
+});
+
+// RPT-07: Nearby reports
+reportRoutes.get('/nearby', async (c) => {
+  const latStr = c.req.query('latitude');
+  const lonStr = c.req.query('longitude');
+
+  if (!latStr || !lonStr) {
+    return c.json({ error: 'Missing latitude and longitude query parameters' }, 400);
+  }
+
+  const latitude = parseFloat(latStr);
+  const longitude = parseFloat(lonStr);
+
+  if (isNaN(latitude) || isNaN(longitude)) {
+    return c.json({ error: 'Invalid latitude or longitude' }, 400);
+  }
+
+  // D-04: Radius with default 1000m, max 5000m
+  const radiusParam = c.req.query('radius');
+  let radius = 1000;
+  if (radiusParam) {
+    radius = parseFloat(radiusParam);
+    if (isNaN(radius) || radius <= 0) {
+      return c.json({ error: 'Invalid radius: must be positive number' }, 400);
+    }
+    if (radius > 5000) {
+      return c.json({ error: 'Radius exceeds maximum of 5000 meters' }, 400);
+    }
+  }
+
+  const nearby = await getNearbyReports(c.env.DB, latitude, longitude, radius);
+  return c.json({ reports: nearby, count: nearby.length }, 200);
+});
+
+// RPT-10/RPT-11/RPT-12: Status transition
+reportRoutes.post('/:id/status', withUser(), async (c) => {
+  const reportId = c.req.param('id');
+
+  const body = await c.req.json();
+  const { status } = body;
+
+  if (!status || !REPORT_STATUSES.includes(status)) {
+    return c.json(
+      {
+        error: `Invalid status. Must be one of: ${REPORT_STATUSES.join(', ')}`,
+      },
+      400
+    );
+  }
+
+  const current = await getReportById(c.env.DB, reportId);
+  if (!current) {
+    return c.json({ error: 'Report not found' }, 404);
+  }
+
+  // RPT-10: State machine enforcement
+  if (!isValidTransition(current.status, status as ReportStatus)) {
+    return c.json(
+      {
+        error: `Invalid transition: ${current.status} -> ${status}`,
+        validTransitions: STATUS_TRANSITIONS[current.status],
+      },
+      400
+    );
+  }
+
+  // RPT-11: Execute valid transition
+  const updated = await updateReportStatus(c.env.DB, reportId, status as ReportStatus);
+  if (!updated) {
+    return c.json({ error: 'Failed to update report status' }, 500);
+  }
+
+  return c.json({ report: updated }, 200);
 });
