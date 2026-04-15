@@ -69,9 +69,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Whitelist webhook route (hierarchy + depth tracking + user creation)
-- [ ] 03-02-PLAN.md — Report harvest route (R2 upload + DIGIPIN + pending status + validation)
-- [ ] 03-03-PLAN.md — Board query + nearby + status transition routes (RBAC filtering + state machine)
+- [x] 03-01-PLAN.md — Whitelist webhook route (hierarchy + depth tracking + user creation)
+- [x] 03-02-PLAN.md — Report harvest route (R2 upload + DIGIPIN + pending status + validation)
+- [x] 03-03-PLAN.md — Board query + nearby + status transition routes (RBAC filtering + state machine)
 
 ### Phase 4: Accountability + Bounty
 **Goal**: Contractors fix reports with spatial accountability, cronies verify fixes on the ground, and bounties incentivize the verification loop
