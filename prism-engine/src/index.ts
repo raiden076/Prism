@@ -36,7 +36,7 @@ const INDIA_BOUNDS = {
 };
 
 // Convert latitude and longitude to DIGIPIN
-function latLngToDIGIPIN(lat: number, lon: number): string {
+export function latLngToDIGIPIN(lat: number, lon: number): string {
   let digipin = '';
   let minLat = INDIA_BOUNDS.minLat;
   let maxLat = INDIA_BOUNDS.maxLat;
@@ -55,7 +55,7 @@ function latLngToDIGIPIN(lat: number, lon: number): string {
     const gridRow = 3 - row;
     digipin += DIGIPIN_GRID[gridRow][col];
 
-    if (level === 2 || level === 3) {
+    if (level === 1 || level === 2) {
       digipin += '-';
     }
 
