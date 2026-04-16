@@ -78,11 +78,23 @@ export type Env = {
   SUPERTOKENS_CORE_URL: string;
   SUPERTOKENS_API_KEY: string;
   USE_SUPERTOKENS_AUTH: string;
+  CORS_ALLOWED_ORIGINS: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.use('*', cors());
+app.use('*', (c, next) => {
+	const corsMiddleware = cors({
+		origin: (origin) => {
+			const allowed = (c.env.CORS_ALLOWED_ORIGINS || '').split(',').map(o => o.trim());
+			return allowed.includes(origin) ? origin : (allowed.length > 0 ? allowed[0] : null);
+		},
+		credentials: true,
+		allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+		allowHeaders: ['Content-Type', 'Authorization', 'rid', 'fdi-version', 'anti-csrf'],
+	});
+	return corsMiddleware(c, next);
+});
 
 // Initialize SuperTokens if enabled
 app.use('*', async (c, next) => {

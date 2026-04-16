@@ -12,6 +12,7 @@ export default defineConfig({
         SUPERTOKENS_CORE_URL: 'https://try.supertokens.io',
         SUPERTOKENS_API_KEY: 'test-api-key',
         USE_SUPERTOKENS_AUTH: 'true',
+        CORS_ALLOWED_ORIGINS: 'tauri://localhost,http://localhost:1420,http://localhost:8787',
       },
     },
     include: ['tests/**/*.test.ts'],
