@@ -11,7 +11,8 @@
     "OTPLESS_CLIENT_SECRET": "YOUR_OTPLESS_CLIENT_SECRET",
     "SUPERTOKENS_CORE_URL": "https://st-dev-16616f40-2494-11f1-9d50-9fb4c1926b7c.aws.supertokens.io",
     "SUPERTOKENS_API_KEY": "50pz2DUX8VpgOry4G4ok9-y3Cx",
-    "USE_SUPERTOKENS_AUTH": "false" // Feature flag for gradual rollout
+    "USE_SUPERTOKENS_AUTH": "false", // Feature flag for gradual rollout
+    "CORS_ALLOWED_ORIGINS": "tauri://localhost,http://localhost:1420,http://localhost:8787"
   },
 
   "d1_databases": [
