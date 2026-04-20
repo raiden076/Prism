@@ -1,416 +1,304 @@
 # PRISM - Decentralized Civic Infrastructure
 
-[![PRISM](https://img.shields.io/badge/PRISM-Civic%20Infrastructure-black)](https://github.com/yourusername/prism)
+[![PRISM](https://img.shields.io/badge/PRISM-Civic%20Infrastructure-black)](https://github.com/raiden076/Prism)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-FFC131?logo=tauri)](https://tauri.app)
 [![Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?logo=svelte)](https://svelte.dev)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare)](https://workers.cloudflare.com)
 
-A decentralized civic infrastructure platform for reporting and managing urban issues (potholes, infrastructure damage, etc.) with built-in accountability and verification systems.
+Decentralized civic infrastructure reporting platform. Field reporters (cronies) submit geo-tagged reports, contractors fix issues with spatial accountability (Haversine drift ≤30m), cronies verify fixes on the ground. War Room dashboard gives government stakeholders real-time visibility.
 
-## 🏗️ Architecture
+**Core loop:** Report → Assign → Fix → Verify — zero trust, full accountability.
+
+## Architecture
 
 ### Tech Stack
 
-- **Frontend**: Tauri v2 + Svelte 5 + TypeScript + Tailwind CSS
-- **Backend**: Cloudflare Workers + Hono.js
-- **Database**: Cloudflare D1 (SQLite)
-- **Storage**: Cloudflare R2
-- **Authentication**: SuperTokens (Passwordless phone OTP)
-- **Maps**: Mappls (MapMyIndia)
+| Layer | Tech |
+|-------|------|
+| Frontend | Tauri v2 + Svelte 5 + TypeScript + Tailwind CSS |
+| Backend | Cloudflare Workers + Hono.js |
+| Database | Cloudflare D1 (SQLite) |
+| Storage | Cloudflare R2 |
+| Auth | SuperTokens (Passwordless phone OTP) |
+| Real-time | Durable Objects (WebSocket) |
+| Maps | Mappls (MapMyIndia) |
 
-### Design System
+### Design System (Neo-Brutalism)
 
-**Neo-Brutalism Tactical Theme:**
-- Colors: `prism-black` (#171717), `prism-white`, `prism-surface`
-- Success Green: #00FF00 (aggressive)
-- Crisis Red: #FF0000
-- Solid shadows (no blur): `shadow-solid-sm`, `shadow-solid-md`, `shadow-solid-lg`
+- `prism-black` (#0a0a0a), `prism-white` (#fdfdfd), `prism-surface` (#171717)
+- `prism-success` (#00FF00), `prism-crisis` (#FF0000)
+- Solid shadows (no blur): `shadow-solid-sm/md/lg`
 - Hardware haptics on all interactions
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Prism/
-├── prism/                          # Frontend (Tauri + Svelte 5)
+├── prism/                              # Frontend (Tauri + Svelte 5)
 │   ├── src/
-│   │   ├── routes/                # SvelteKit routes
-│   │   │   ├── +page.svelte      # Field Interface (Report Pothole)
-│   │   │   ├── board/+page.svelte # War Room Executive Board
-│   │   │   ├── login/+page.svelte # Authentication
-│   │   │   └── ...
+│   │   ├── routes/
+│   │   │   ├── +page.svelte           # Field Interface (Record Pothole)
+│   │   │   ├── +layout.svelte         # Root layout + auth guard
+│   │   │   ├── login/+page.svelte     # SuperTokens phone OTP
+│   │   │   ├── board/+page.svelte     # War Room Executive Board
+│   │   │   ├── area-check/+page.svelte # Authorized zone monitoring
+│   │   │   ├── bounties/+page.svelte  # Verification bounty discovery
+│   │   │   └── batch-verify/+page.svelte # Geo-fence cluster batch verify
 │   │   ├── lib/
-│   │   │   ├── supertokens.ts    # Auth state management
-│   │   │   ├── auth.ts           # Auth service wrapper
-│   │   │   ├── tauri/            # Tauri plugin wrappers
-│   │   │   │   ├── camera.ts     # Camera API
-│   │   │   │   ├── geolocation.ts # GPS
-│   │   │   │   └── haptics.ts    # Haptic feedback
-│   │   │   └── ...
-│   │   └── app.css               # Global styles
-│   ├── src-tauri/                # Tauri native bindings
-│   │   ├── gen/android/          # Android project
-│   │   ├── target/               # Rust build output
-│   │   └── tauri.conf.json       # Tauri config
+│   │   │   ├── auth.ts                # Auth service wrapper (dual: SuperTokens + legacy)
+│   │   │   ├── supertokens.ts         # SuperTokens WebJS SDK integration
+│   │   │   ├── digipin.ts             # India DIGIPIN encoder/decoder
+│   │   │   ├── spatial.ts             # Haversine distance, drift calc
+│   │   │   ├── geofence.ts            # Dedup clusters, nearby filtering
+│   │   │   ├── hierarchy.ts           # Org tree traversal, access control
+│   │   │   ├── contractor-locations.ts # WebSocket contractor tracking store
+│   │   │   ├── offline/               # IndexedDB persistence + background sync
+│   │   │   │   ├── db.ts              # LRU eviction, 50MB quota
+│   │   │   │   ├── sync.ts            # Exponential backoff sync
+│   │   │   │   └── index.ts
+│   │   │   ├── tauri/                 # Hardware wrappers
+│   │   │   │   ├── camera.ts          # getUserMedia + metadata burn
+│   │   │   │   ├── geolocation.ts     # Tauri plugin + web fallback
+│   │   │   │   └── haptics.ts         # Vibration patterns
+│   │   │   └── components/            # Shared UI components
+│   │   │       ├── PhoneInput.svelte
+│   │   │       ├── OtpInput.svelte
+│   │   │       ├── SignOutButton.svelte
+│   │   │       ├── GeoFenceWarning.svelte
+│   │   │       ├── HierarchyTree.svelte
+│   │   │       └── WorkersStatusGrid.svelte
+│   │   └── app.css
+│   ├── tests/
+│   │   ├── supertokens-auth.test.ts
+│   │   └── mocks/
+│   ├── src-tauri/                      # Tauri native bindings
 │   └── package.json
 │
-├── prism-engine/                  # Backend (Cloudflare Workers)
+├── prism-engine/                       # Backend (Cloudflare Workers + Hono)
 │   ├── src/
-│   │   └── index.ts              # Hono.js API routes
-│   ├── migrations/               # D1 database migrations
-│   ├── wrangler.jsonc            # Cloudflare config
+│   │   ├── index.ts                   # App entry, route wiring (~1170 lines)
+│   │   ├── worker.ts                  # Worker fetch handler
+│   │   ├── setup.ts                   # Test environment setup
+│   │   ├── contractor-locations.ts    # Durable Object (WebSocket tracking)
+│   │   ├── routes/
+│   │   │   ├── auth.ts                # SuperTokens sign-in/up, profile, signout
+│   │   │   ├── reports.ts             # Harvest, nearby, AI review, approve/reject
+│   │   │   ├── board.ts               # War Room board query with RBAC
+│   │   │   └── whitelist.ts           # Whitelist ingestion + hierarchy capture
+│   │   ├── middleware/
+│   │   │   ├── auth.ts                # Dual auth (SuperTokens session + legacy phone)
+│   │   │   └── rbac.ts                # withUser + requireRole middleware
+│   │   └── lib/
+│   │       ├── types.ts               # Dual-type system (DB row + app types)
+│   │       ├── queries.ts             # Typed D1 query layer (all tables)
+│   │       ├── spatial.ts             # Haversine, bearing, bounding box
+│   │       ├── digipin.ts             # DIGIPIN grid encoder/decoder
+│   │       ├── supertokens.ts         # SuperTokens Node SDK init + helpers
+│   │       ├── supertokens-adapter.ts # jose-based adapter (no Node SDK dep)
+│   │       ├── feature-flags.ts       # Gradual rollout (10%→50%→100%)
+│   │       └── auth-analytics.ts      # Per-request auth metrics
+│   ├── tests/
+│   │   ├── routes/
+│   │   │   ├── auth.test.ts
+│   │   │   ├── board.test.ts
+│   │   │   ├── reports.test.ts
+│   │   │   └── whitelist.test.ts
+│   │   ├── middleware/
+│   │   │   ├── auth.test.ts
+│   │   │   └── rbac.test.ts
+│   │   ├── lib/
+│   │   │   ├── types.test.ts
+│   │   │   ├── queries.test.ts
+│   │   │   ├── queries-auth.test.ts
+│   │   │   ├── spatial.test.ts
+│   │   │   ├── digipin.test.ts
+│   │   │   ├── adapter.test.ts
+│   │   │   └── test-helpers.test.ts
+│   │   ├── supertokens-integration.test.ts
+│   │   ├── factories.ts
+│   │   ├── setup.ts
+│   │   └── env.d.ts
+│   ├── migrations/
+│   │   ├── 0001_init_schema.sql       # Users, Reports, Interventions, Verifications
+│   │   ├── 0002_role_hierarchy_tags.sql # RoleHierarchy, AccountabilityTags, UserTags
+│   │   ├── 0003_geofence_bounties.sql  # GeoFenceClusters, VerificationBounties
+│   │   ├── 0004_supertokens_user_mapping.sql # SuperTokens user ID column
+│   │   └── 0005_durable_objects.sql   # Durable Objects namespace
+│   ├── wrangler.jsonc
 │   └── package.json
 │
 └── Documentation/
-    ├── prism_blueprint.md        # Full architecture blueprint
-    ├── implementation_plan.md    # Implementation roadmap
-    └── Gemini.md                 # Current status/progress
+    └── system_architecture.md
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js** (v18+) or **Bun** (recommended)
+- **Bun** (package manager)
 - **Rust** toolchain
-- **Android SDK** (for mobile builds)
-- **Cloudflare** account (for backend)
+- **Cloudflare** account (for Workers/D1/R2 deployment)
 
-### Installation
+### Install
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/prism.git
-   cd prism
-   ```
-
-2. **Install frontend dependencies:**
-   ```bash
-   cd prism
-   bun install
-   ```
-
-3. **Install backend dependencies:**
-   ```bash
-   cd ../prism-engine
-   bun install
-   ```
-
-4. **Set up environment variables:**
-   
-   Create `prism/.env`:
-   ```env
-   VITE_SUPERTOKENS_CORE_URL=your_supertokens_core_url
-   VITE_API_BASE_URL=http://localhost:8787
-   ```
-
-   Create `prism-engine/.env`:
-   ```env
-   SUPERTOKENS_CORE_URL=your_supertokens_core_url
-   ```
-
-## 🛠️ Development
-
-### Start Development Servers
-
-**Terminal 1 - Backend:**
 ```bash
-cd prism-engine
-bun run dev
-# Runs on http://localhost:8787
+git clone https://github.com/raiden076/Prism.git
+cd Prism
+
+# Frontend
+cd prism && bun install
+
+# Backend
+cd ../prism-engine && bun install
 ```
 
-**Terminal 2 - Frontend:**
+### Dev Servers
+
+```bash
+# Terminal 1 — Backend (port 8787)
+cd prism-engine && bun run dev
+
+# Terminal 2 — Frontend (port 1420)
+cd prism && bun run dev
+
+# Apply D1 migrations (local)
+cd prism-engine && wrangler d1 migrations apply prism_board --local
+```
+
+### Android
+
 ```bash
 cd prism
-bun run dev
-# Runs on http://localhost:1420
+bun run tauri android dev          # Hot reload
+bun run tauri android build --target aarch64  # APK build
 ```
 
-### Android Development
+## Database Schema
 
-**Option A: Tauri Dev Mode (Hot Reload):**
-```bash
-cd prism
-bun run tauri android dev
-```
+10 tables across 5 migrations:
 
-**Option B: Build APK:**
-```bash
-cd prism
-bun run tauri android build --target aarch64
-```
+| Table | Purpose |
+|-------|---------|
+| `Users` | Role-based accounts (crony/contractor/admin) + SuperTokens mapping |
+| `Whitelisted_Sources` | Trusted party worker verification |
+| `Reports` | Geo-tagged incidents, DIGIPIN, status (5 states), AI confidence |
+| `Interventions` | Contractor fix records + spatial drift calc |
+| `Verifications` | Crony ground-truth checks |
+| `RoleHierarchy` | User-supervisor relationships (recursive CTE) |
+| `AccountabilityTags` | Flexible tagging (role/department/region) |
+| `UserTags` | Many-to-many user-tag junction |
+| `AuthorityChain` | Report action audit trail |
+| `GeoFenceClusters` / `GeoFenceReports` | Deduplicated report clusters |
+| `VerificationBounties` / `BountyVerifications` | Bounty reward lifecycle |
 
-## 📱 Building Android APK
+## API Endpoints
 
-### Method 1: Automated Build Script
+### Auth (`/auth/`)
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/auth/signinup` | SuperTokens sign-in/up callback |
+| GET | `/auth/me` | Current user profile from session |
+| POST | `/auth/signout` | Revoke session |
 
-Create `prism/build-apk.sh`:
+### Phase 1 — Cold Start (`/api/v1/`)
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/api/v1/whitelist` | Whitelist user + hierarchy capture |
+| POST | `/api/v1/reports/harvest` | Trusted report ingestion (multipart) |
+| GET | `/api/v1/geofences/nearby` | Nearby geo-fence clusters |
+| GET | `/api/v1/bounties/nearby` | Nearby verification bounties |
+| POST | `/api/v1/bounties/claim` | Claim verification bounty |
+| POST | `/api/v1/verifications` | Submit verification + drift check |
+| GET | `/api/v1/hierarchy/subtree/:userId` | User hierarchy subtree (recursive CTE) |
+| GET | `/api/v1/hierarchy/tree` | Full hierarchy tree |
+| GET | `/api/v1/reports/nearby` | Nearby reports for mini-map |
+| GET | `/api/v1/users` | List users with role filter |
+| POST | `/api/v1/deployments` | Deploy contractor to report |
+| GET | `/api/v1/reports/ai-review` | AI review queue |
+| POST | `/api/v1/reports/:id/approve` | Approve AI-reviewed report |
+| POST | `/api/v1/reports/:id/reject` | Reject AI-reviewed report |
+| POST | `/api/v1/geofences/batch-verify` | Batch verify cluster reports |
+| GET | `/api/v1/geofences/:clusterId/reports` | Reports in cluster |
+| GET | `/api/v1/workers/status` | Worker health monitor |
+| GET | `/health` | Health check + phase indicator |
 
-```bash
-#!/bin/bash
-set -e
+### Phase 2 — AI Activation (`/api/v2/`)
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v2/reports` | War Room board state (last 100) |
+| GET | `/api/v2/bounties` | Bounties with location filtering |
+| POST | `/api/v2/auth/verify` | OTPless token verification + auto-create |
+| GET | `/api/v2/user/info` | User info by phone |
+| POST | `/api/v2/reports` | Public report ingestion with AI confidence |
+| POST | `/api/v2/reports/appeal` | Appeal auto-dropped report |
+| POST | `/api/v2/interventions/fix` | Contractor fix + spatial drift check |
+| POST | `/api/v2/interventions/verify` | Crony ground-truth verification |
 
-echo "🧹 Cleaning previous builds..."
-rm -rf build .svelte-kit
-rm -rf src-tauri/gen/android/app/build
-rm -rf src-tauri/target
+### Real-time (`/api/v1/contractors/`)
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/contractors/locations/ws` | WebSocket location streaming |
+| GET | `/api/v1/contractors/locations` | HTTP fallback — all locations |
+| POST | `/api/v1/contractors/location` | Update contractor location |
+| POST | `/api/v1/contractors/status` | Update contractor status |
+| GET | `/api/v1/contractors/nearby` | Find contractors near location |
 
-echo "📦 Installing dependencies..."
-bun install
+### RBAC
 
-echo "🔨 Building frontend..."
-bun run build
+- `getUserFromAuth()` extracts user context
+- `getDescendantIds()` recursive CTE for subtree
+- `getReportsFilter()` role-based WHERE clauses:
+  - **crony**: own reports only
+  - **contractor**: assigned reports
+  - **admin**: all reports
 
-echo "🤖 Building Android APK for arm64..."
-bun run tauri android build --target aarch64
+## Testing
 
-echo "✍️  Aligning and signing APK..."
-cd src-tauri/gen/android/app/build/outputs/apk/arm64/release
-
-# Align APK
-/home/$USER/Android/Sdk/build-tools/34.0.0/zipalign -f 4 \
-  app-arm64-release-unsigned.apk \
-  app-arm64-release-aligned.apk
-
-# Sign with v2/v3 scheme (REQUIRED for Android 14+)
-/home/$USER/Android/Sdk/build-tools/34.0.0/apksigner sign \
-  --ks /home/$USER/Prism/prism/src-tauri/gen/android/debug.keystore \
-  --ks-pass pass:android \
-  --key-pass pass:android \
-  --out app-arm64-release-signed.apk \
-  app-arm64-release-aligned.apk
-
-# Verify signature
-/home/$USER/Android/Sdk/build-tools/34.0.0/apksigner verify -v app-arm64-release-signed.apk
-
-# Copy to project root
-cp app-arm64-release-signed.apk \
-   /home/$USER/Prism/prism/src-tauri/gen/android/PRISM-v0.1.0.apk
-
-echo "✅ APK ready!"
-ls -lh /home/$USER/Prism/prism/src-tauri/gen/android/PRISM-v0.1.0.apk
-```
-
-Run:
-```bash
-chmod +x build-apk.sh
-./build-apk.sh
-```
-
-### Method 2: Manual Step-by-Step
-
-**Step 1: Clean**
-```bash
-cd prism
-rm -rf build .svelte-kit
-rm -rf src-tauri/gen/android/app/build
-rm -rf src-tauri/target
-cd src-tauri && cargo clean && cd ..
-```
-
-**Step 2: Build**
-```bash
-bun install
-bun run build
-bun run tauri android build --target aarch64
-```
-
-**Step 3: Sign**
-```bash
-cd src-tauri/gen/android/app/build/outputs/apk/arm64/release
-
-# Align
-zipalign -v 4 app-arm64-release-unsigned.apk app-arm64-release-aligned.apk
-
-# Sign (v2/v3 scheme)
-apksigner sign \
-  --ks ../../../../../../debug.keystore \
-  --ks-pass pass:android \
-  --key-pass pass:android \
-  --out app-arm64-release-signed.apk \
-  app-arm64-release-aligned.apk
-
-# Verify
-apksigner verify -v app-arm64-release-signed.apk
-```
-
-**⚠️ CRITICAL:** You MUST use `apksigner` (not `jarsigner`) for Android 14+ (Target SDK 36). Android 14 requires signature scheme v2 minimum.
-
-## 🔧 Troubleshooting
-
-### Issue: "App not installed as package appears to be invalid"
-
-**Solution 1:** Sign with apksigner (v2/v3 scheme)
-```bash
-# WRONG - jarsigner only creates v1
-jarsigner -keystore debug.keystore app.apk androiddebugkey
-
-# CORRECT - apksigner creates v2/v3
-apksigner sign --ks debug.keystore --out signed.apk unsigned.apk
-```
-
-**Solution 2:** Use arm64-specific APK (not universal)
-- Universal APKs sometimes fail on certain devices
-- Build with `--target aarch64` for 64-bit phones
-
-**Solution 3:** Uninstall previous version completely
-```bash
-adb uninstall com.prism.civic
-```
-
-### Issue: White Screen / App Crashes on Startup
-
-**Cause:** JavaScript errors during mount
-
-**Common Fixes:**
-
-1. **Svelte 5 Runes Error:**
-   - `$state` and `$derived` can ONLY be used inside components
-   - NEVER at module level (in `.ts` files)
-   - Use subscription patterns for module-level state
-
-2. **Window Object Access:**
-   ```svelte
-   <!-- WRONG -->
-   {#if window.mappls}
-   
-   <!-- CORRECT -->
-   {#if typeof window !== 'undefined' && (window as any).mappls}
-   ```
-
-3. **Tauri Store API:**
-   ```typescript
-   // WRONG
-   const { Store } = await import('@tauri-apps/plugin-store');
-   const store = new Store('auth.json');
-   
-   // CORRECT
-   const { load } = await import('@tauri-apps/plugin-store');
-   const store = await load('auth.json', { autoSave: true });
-   ```
-
-### Issue: Build Fails with "cannot find crate"
+- **Backend**: Vitest + `@cloudflare/vitest-pool-workers` (miniflare) — ~900 test assertions
+- **Frontend**: Vitest + jsdom — ~140 test assertions
+- Backend tests cover: routes, middleware, lib modules, SuperTokens integration
 
 ```bash
-cd prism/src-tauri
-rustup target add aarch64-linux-android
-rustup target add armv7-linux-androideabi
-cargo update
+# Backend tests
+cd prism-engine && bun run test
+
+# Frontend tests
+cd prism && bun run test
 ```
 
-### Issue: Backend Not Responding
+## Current Status
 
-1. Check if backend is running:
-   ```bash
-   curl http://localhost:8787/api/v1/health
-   ```
+**Production rewrite — 3 phases complete (of 7 planned)**
 
-2. Check wrangler configuration:
-   ```bash
-   cd prism-engine
-   wrangler d1 migrations list prism_board --local
-   ```
+| Phase | Status | Description |
+|-------|--------|-------------|
+| 01 — Foundation | Done | Types, DIGIPIN, spatial libs, D1 query layer, test infra |
+| 02 — Auth + RBAC | Done | SuperTokens adapter, auth middleware, role hierarchy, code review fixes |
+| 03 — Core Reports | Done | Whitelist webhook, report harvest, board query + status transitions |
+| 04 — Frontend Web | Pending | SPA rebuild with new backend |
+| 05 — Mobile | Pending | Android APK |
+| 06 — AI Integration | Pending | YOLO inference routing, confidence thresholds |
+| 07 — Production | Pending | Deploy, monitoring, hardening |
 
-## 🗄️ Database Schema
+## Contributing
 
-See `prism-engine/migrations/0001_init_schema.sql` for full schema.
+1. Svelte 5 runes (`$state`, `$derived`, `$props`)
+2. Neo-Brutalism design conventions
+3. `bun` for all package management
+4. TypeScript strict, no `any` types
+5. Prepared statements for all D1 queries
+6. Update this README on structural changes
 
-Key tables:
-- **Users**: Role-based access (crony, contractor, admin)
-- **Whitelisted_Sources**: Trusted party verification
-- **Reports**: Geolocation-tagged incidents (DIGIPIN format)
-- **Interventions**: Spatial drift calculation for accountability
-- **Verifications**: Final ground-truth loop
+## License
 
-## 📡 API Endpoints
+**Apache License 2.0 + Commons Clause** (Source-Available, not OSI Open Source).
 
-### Phase 1: Cold Start (Harvesting)
-- `POST /api/v1/reports/harvest` - Submit new report
-- `GET /api/v1/reports/nearby` - Find nearby potholes
+- Can use, modify, distribute for non-commercial purposes
+- Cannot sell or commercially host
 
-### Phase 2: AI Activation
-- Authentication routes via SuperTokens
-- Contractor management
-- Intervention tracking
-
-See `prism-engine/src/index.ts` for all routes.
-
-## 🎨 Frontend Components
-
-### Key Components
-- **+page.svelte**: Field interface (camera, GPS, submit)
-- **board/+page.svelte**: War Room dashboard
-- **login/+page.svelte**: Phone OTP authentication
-- **GeoFenceWarning.svelte**: Duplicate detection warning
-
-### State Management
-- Auth store uses subscription pattern (not Svelte runes at module level)
-- Reactive state via `$state`, `$derived` in components only
-- Tauri plugins: camera, geolocation, haptics
-
-## 📋 Current Status
-
-**Phase 6: Verification** ✅
-
-Completed:
-- [x] Project scaffolding (Tauri + Svelte 5)
-- [x] Backend infrastructure (D1, R2, Hono)
-- [x] Tactical interface (Neo-Brutalism design)
-- [x] Hardware integration (camera, GPS, haptics)
-- [x] Authentication (SuperTokens phone OTP)
-- [x] Mobile builds (Android APK)
-
-In Progress:
-- [ ] APK crash debugging
-- [ ] End-to-end testing
-- [ ] iOS build support
-
-Known Issues:
-- APK installation requires v2/v3 signature scheme
-- Must use arm64-specific builds (not universal)
-- Some TypeScript type warnings (non-blocking)
-
-## 🤝 Contributing
-
-1. Follow existing code style (Svelte 5 runes, Neo-Brutalism design)
-2. Test on both desktop and mobile
-3. Use `bun` for package management
-4. Run type checking: `bun run check`
-5. Update this README with any architectural changes
-
-## 📜 License
-
-**⚠️ IMPORTANT LICENSING NOTICE**
-
-This project is licensed under a combined **Apache License 2.0 + Commons Clause**.
-
-### What This Means:
-
-- ✅ **You CAN**: Use, modify, and distribute the software for **non-commercial** purposes
-- ✅ **You CAN**: Fork the repository and make changes
-- ✅ **You CAN**: Use it for personal, educational, or research projects
-- ❌ **You CANNOT**: Sell the software or offer it as a commercial service/hosting
-
-### Commons Clause Restriction:
-
-The grant of rights under the Apache License 2.0 **does not include** the right to "Sell" the software. "Sell" means practicing any rights granted to provide to third parties, for a fee or other consideration, a product or service whose value derives substantially from the functionality of this software.
-
-### Classification:
-
-This is **Source-Available** software, not Open Source software under the OSI definition.
-
-See [LICENSE](./LICENSE) for the full license text.
-
-## 🔗 Resources
-
-- [Tauri Documentation](https://tauri.app)
-- [Svelte 5 Documentation](https://svelte.dev/docs/svelte/what-are-runes)
-- [Hono.js](https://hono.dev)
-- [Cloudflare Workers](https://developers.cloudflare.com/workers/)
-- [SuperTokens](https://supertokens.com)
+See [LICENSE](./LICENSE) for full text.
 
 ---
 
-**Last Updated:** March 21, 2026
-**Version:** 0.1.0
-**Status:** In Development
+**Last Updated:** April 20, 2026
+**Repository:** https://github.com/raiden076/Prism
