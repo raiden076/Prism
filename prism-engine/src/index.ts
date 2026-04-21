@@ -823,7 +823,12 @@ app.get('/api/v1/bounties/nearby', async (c: Context<{ Bindings: Env }>) => {
     }).map((report: any) => ({
       ...report,
       distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000, // in km
-      bounty_amount: 5 + Math.floor(Math.random() * 5) // ₹5-10
+      const weight = typeof report.severity_weight === "number" ? report.severity_weight : 0.5; const deterministic_amount = Math.round(5 + (weight * 10));
+      return {
+        ...report,
+        distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000,
+        bounty_amount: deterministic_amount
+      };
     }));
 
     // Create bounty entries for any that don't exist
