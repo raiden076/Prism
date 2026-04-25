@@ -378,7 +378,7 @@ app.post('/api/v2/reports/appeal', async (c: Context<{ Bindings: Env }>) => {
 });
 
 // Helper for Haversine
-const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+export const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371e3; // meters
     const p1 = lat1 * Math.PI/180;
     const p2 = lat2 * Math.PI/180;
