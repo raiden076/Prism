@@ -502,11 +502,18 @@ app.get('/api/v1/bounties/nearby', async (c: Context<{ Bindings: Env }>) => {
     const nearby = reports.results?.filter((report: any) => {
       const distance = haversine(userLat, userLon, report.latitude, report.longitude);
       return distance <= radiusMeters;
-    }).map((report: any) => ({
-      ...report,
-      distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000, // in km
-      bounty_amount: 5 + Math.floor(Math.random() * 5) // ₹5-10
-    }));
+    }).map((report: any) => {
+      // PRISM #5: Seed random generator with report ID for deterministic bounty
+      // Simple hash from UUID string
+      const idHash = report.id.split('-').reduce((acc: number, part: string) => acc + parseInt(part, 16), 0);
+      const deterministicRandom = (idHash % 100) / 100;
+      
+      return {
+        ...report,
+        distance: haversine(userLat, userLon, report.latitude, report.longitude) / 1000, // in km
+        bounty_amount: 5 + Math.floor(deterministicRandom * 5) // ₹5-10
+      };
+    });
 
     // Create bounty entries for any that don't exist
     for (const report of nearby) {
