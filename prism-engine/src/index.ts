@@ -601,16 +601,19 @@ app.post('/api/v1/verifications', async (c: Context<{ Bindings: Env }>) => {
       return c.json({ error: 'Verifier not found' }, 404);
     }
 
-    // Get bounty and report
+    // PRISM #14: Enforce bounty claim expiry (15-minute window)
     const bounty = await c.env.DB.prepare(
       `SELECT vb.*, r.latitude, r.longitude
        FROM VerificationBounties vb
        JOIN Reports r ON vb.report_id = r.id
-       WHERE vb.id = ? AND vb.claimed_by = ?`
-    ).bind(bounty_id, verifier.id).first();
+       WHERE vb.id = ? 
+       AND vb.claimed_by = ? 
+       AND vb.bounty_status = 'claimed'
+       AND vb.claimed_at + (15 * 60 * 1000) > ?`
+    ).bind(bounty_id, verifier.id, Date.now()).first();
 
     if (!bounty) {
-      return c.json({ error: 'Bounty not found or not claimed by you' }, 404);
+      return c.json({ error: 'Bounty claim expired or not found' }, 410);
     }
 
     // Calculate spatial drift
