@@ -28,11 +28,23 @@ export type Env = {
   SUPERTOKENS_API_KEY: string;
   USE_SUPERTOKENS_AUTH: string;
   WEBHOOK_SECRET: string;
+  CORS_ALLOWED_ORIGINS: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.use('*', cors());
+app.use('*', async (c, next) => {
+  const allowedOrigins = (c.env.CORS_ALLOWED_ORIGINS || '').split(',').map(o => o.trim());
+  const corsMiddleware = cors({
+    origin: (origin) => {
+      return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+    },
+    credentials: true,
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization', 'rid', 'fdi-version', 'anti-csrf'],
+  });
+  return corsMiddleware(c, next);
+});
 
 // Auth routes (SuperTokens adapter-based)
 app.route('/auth', authRoutes);
